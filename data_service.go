@@ -35,7 +35,7 @@ func (d *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
 		return nil, nil, ferr
 	}
 
-	path := path.Join("api", "feeds", d.client.Feed.Name, "data")
+	path := path.Join("api", "v1", "feeds", d.client.Feed.Name, "data")
 
 	req, rerr := d.client.NewRequest("POST", path, dp)
 	if rerr != nil {
@@ -61,7 +61,7 @@ func (d *DataService) Send(dp *DataPoint) (*DataPoint, *Response, error) {
 		return nil, nil, ferr
 	}
 
-	path := path.Join("api", "feeds", d.client.Feed.Name, "send")
+	path := path.Join("api", "v1", "feeds", d.client.Feed.Name, "data", "send")
 
 	req, rerr := d.client.NewRequest("POST", path, dp)
 	if rerr != nil {
