@@ -14,9 +14,7 @@ import (
 )
 
 const (
-	BaseURL = "https://io.adafruit.com/api"
-
-	mediaTypeV1   = "application/json"
+	BaseURL       = "https://io.adafruit.com"
 	xAIOKeyHeader = "X-AIO-Key"
 )
 
@@ -47,7 +45,7 @@ type ErrorResponse struct {
 }
 
 func (r *ErrorResponse) Error() string {
-	return fmt.Sprintf("%v %v: %d %v %v",
+	return fmt.Sprintf("%v %v: %v",
 		r.Response.Request.Method, r.Response.Request.URL,
 		r.Response.StatusCode, r.Message)
 }
@@ -94,9 +92,11 @@ func CheckResponse(r *http.Response) error {
 		return nil
 	}
 	errorResponse := &ErrorResponse{Response: r}
+
 	// read response body into Error.Message
 	body, _ := ioutil.ReadAll(r.Body)
 	errorResponse.Message = string(body)
+
 	return errorResponse
 }
 
@@ -129,7 +129,12 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 		return nil, err
 	}
 
-	req.Header.Add("Accept", mediaTypeV1)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+
+	// Authentication v1
+	req.Header.Add(xAIOKeyHeader, c.APIKey)
+
 	if c.UserAgent != "" {
 		req.Header.Add("User-Agent", c.UserAgent)
 	}
@@ -145,9 +150,6 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 //
 // adapted from https://github.com/google/go-github
 func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
-
-	// Add authentication header
-	req.Header.Add(xAIOKeyHeader, c.APIKey)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
