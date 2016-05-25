@@ -2,7 +2,7 @@ package adafruitio
 
 import (
 	"encoding/json"
-	"path"
+	"fmt"
 )
 
 type DataService struct {
@@ -36,7 +36,7 @@ func (d *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
 		return nil, nil, ferr
 	}
 
-	path := path.Join("api", "v1", "feeds", d.client.Feed.Name, "data")
+	path := fmt.Sprintf("api/v1/feeds/%v/data", d.client.Feed.Name)
 
 	req, rerr := d.client.NewRequest("POST", path, dp)
 	if rerr != nil {
@@ -62,7 +62,7 @@ func (d *DataService) Send(dp *DataPoint) (*DataPoint, *Response, error) {
 		return nil, nil, ferr
 	}
 
-	path := path.Join("api", "v1", "feeds", d.client.Feed.Name, "data", "send")
+	path := fmt.Sprintf("api/v1/feeds/%v/data/send", d.client.Feed.Name)
 
 	req, rerr := d.client.NewRequest("POST", path, dp)
 	if rerr != nil {
