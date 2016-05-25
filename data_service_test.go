@@ -15,7 +15,7 @@ func TestData_MissingFeed(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/feeds/temperature/data",
+	mux.HandleFunc("/api/v1/feeds/temperature/data",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
@@ -38,7 +38,7 @@ func TestData_Unauthenticated(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/feeds/temperature/data",
+	mux.HandleFunc("/api/v1/feeds/temperature/data",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
@@ -62,7 +62,7 @@ func TestDataCreate(t *testing.T) {
 	defer teardown()
 
 	// prepare endpoint URL for just this request
-	mux.HandleFunc("/feeds/temperature/data",
+	mux.HandleFunc("/api/v1/feeds/temperature/data",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
@@ -93,7 +93,7 @@ func TestDataSend(t *testing.T) {
 	defer teardown()
 
 	// prepare endpoint URL for just this request
-	mux.HandleFunc("/feeds/temperature/data/send",
+	mux.HandleFunc("/api/v1/feeds/temperature/data/send",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
