@@ -76,7 +76,7 @@ func TestDataCreate(t *testing.T) {
 	val := json.Number("67.112")
 
 	dp := &aio.DataPoint{
-		Value: &val,
+		Value: val,
 	}
 	datapoint, response, err := client.Data.Create(dp)
 
@@ -84,8 +84,8 @@ func TestDataCreate(t *testing.T) {
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal(int64(1), *datapoint.ID)
-	assert.Equal(val, *datapoint.Value)
+	assert.Equal(1, datapoint.ID)
+	assert.Equal(val, datapoint.Value)
 }
 
 func TestDataSend(t *testing.T) {
@@ -107,7 +107,7 @@ func TestDataSend(t *testing.T) {
 	val := json.Number("67.112")
 
 	dp := &aio.DataPoint{
-		Value: &val,
+		Value: val,
 	}
 	datapoint, response, err := client.Data.Send(dp)
 
@@ -115,6 +115,6 @@ func TestDataSend(t *testing.T) {
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal(int64(1), *datapoint.ID)
-	assert.Equal(val, *datapoint.Value)
+	assert.Equal(1, datapoint.ID)
+	assert.Equal(val, datapoint.Value)
 }
