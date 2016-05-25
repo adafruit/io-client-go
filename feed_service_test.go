@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/adafruit/io-client-go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,4 +55,75 @@ func TestFeedGet(t *testing.T) {
 
 	assert.Equal(1, feed.ID)
 	assert.Equal("test", feed.Name)
+}
+
+func TestFeedCreate(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/feeds",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "POST")
+			fmt.Fprint(w, `{"id":1, "name":"test"}`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	nfeed := &adafruitio.Feed{Name: "test"}
+
+	feed, response, err := client.Feed.Create(nfeed)
+
+	assert.Nil(err)
+	assert.NotNil(feed)
+	assert.NotNil(response)
+
+	assert.Equal(1, feed.ID)
+	assert.Equal("test", feed.Name)
+}
+
+func TestFeedUpdate(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/feeds/test",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "PATCH")
+			fmt.Fprint(w, `{"id":1, "name":"test-2"}`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	feed := &adafruitio.Feed{ID: 1, Name: "test"}
+
+	ufeed, response, err := client.Feed.Update("test", feed)
+
+	assert.Nil(err)
+	assert.NotNil(ufeed)
+	assert.NotNil(response)
+
+	assert.Equal(1, ufeed.ID)
+	assert.Equal("test-2", ufeed.Name)
+	assert.NotEqual(&feed, &ufeed)
+}
+
+func TestFeedDelete(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/feeds/test",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "DELETE")
+		},
+	)
+
+	assert := assert.New(t)
+
+	response, err := client.Feed.Delete("test")
+
+	assert.Nil(err)
+	assert.NotNil(response)
+
+	assert.Equal(200, response.StatusCode)
 }

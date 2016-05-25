@@ -27,6 +27,7 @@ type Feed struct {
 	UpdatedAt   string `json:"updated_at,omitempty"`
 }
 
+// All lists all available feeds.
 func (s *FeedService) All() ([]*Feed, *Response, error) {
 	path := "api/v1/feeds"
 
@@ -45,6 +46,7 @@ func (s *FeedService) All() ([]*Feed, *Response, error) {
 	return feeds, resp, nil
 }
 
+// Get the Feed record identified by the given ID
 func (s *FeedService) Get(id interface{}) (*Feed, *Response, error) {
 	path := fmt.Sprintf("api/v1/feeds/%v", id)
 
@@ -53,7 +55,6 @@ func (s *FeedService) Get(id interface{}) (*Feed, *Response, error) {
 		return nil, nil, rerr
 	}
 
-	// request populates Feed slice
 	var feed Feed
 	resp, err := s.client.Do(req, &feed)
 	if err != nil {
@@ -63,14 +64,55 @@ func (s *FeedService) Get(id interface{}) (*Feed, *Response, error) {
 	return &feed, resp, nil
 }
 
-func (s *FeedService) Create(id int) (*Feed, *Response, error) {
-	return nil, nil, nil
+// Create takes a Feed record, creates it, and returns the updated record or an error.
+func (s *FeedService) Create(feed *Feed) (*Feed, *Response, error) {
+	path := "api/v1/feeds"
+
+	req, rerr := s.client.NewRequest("POST", path, feed)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	resp, err := s.client.Do(req, feed)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return feed, resp, nil
 }
 
-func (s *FeedService) Update(id int) (*Feed, *Response, error) {
-	return nil, nil, nil
+// Update takes an ID and a Feed record, updates it, and returns an updated
+// record instance or an error.
+func (s *FeedService) Update(id interface{}, feed *Feed) (*Feed, *Response, error) {
+	path := fmt.Sprintf("api/v1/feeds/%v", id)
+
+	req, rerr := s.client.NewRequest("PATCH", path, feed)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var updatedFeed Feed
+	resp, err := s.client.Do(req, &updatedFeed)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &updatedFeed, resp, nil
 }
 
-func (s *FeedService) Delete(id int) (*Feed, *Response, error) {
-	return nil, nil, nil
+// Delete the Feed identified by the given ID.
+func (s *FeedService) Delete(id interface{}) (*Response, error) {
+	path := fmt.Sprintf("api/v1/feeds/%v", id)
+
+	req, rerr := s.client.NewRequest("DELETE", path, nil)
+	if rerr != nil {
+		return nil, rerr
+	}
+
+	resp, err := s.client.Do(req, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
