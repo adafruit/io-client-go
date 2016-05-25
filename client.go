@@ -38,6 +38,13 @@ type Response struct {
 	*http.Response
 }
 
+func (r *Response) debug() {
+	all, _ := ioutil.ReadAll(r.Body)
+	fmt.Println("---")
+	fmt.Println(string(all))
+	fmt.Println("---")
+}
+
 // ErrorResponse reports one or more errors caused by an API request.
 type ErrorResponse struct {
 	Response *http.Response // HTTP response that carried the error message
