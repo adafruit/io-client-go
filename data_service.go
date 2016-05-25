@@ -30,6 +30,7 @@ type DataPoint struct {
 //
 // Create new Data on an existing Feed
 func (d *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
+	// feed name must be set before Data interface can be called
 	ferr := d.client.checkFeed()
 	if ferr != nil {
 		return nil, nil, ferr
