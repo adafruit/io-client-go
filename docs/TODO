@@ -1,23 +1,22 @@
 API v1 Endpoints
 
-- [] Feeds
+- [x] Feeds
   - [x] Index
-  - [] Create
-  - [x] Read
-  - [] Update
-  - [] Delete
-- [] Data
   - [x] Create
-  - [] Read
-  - [] Update
-  - [] Delete
-  - [] Helper Methods
+  - [x] Read
+  - [x] Update
+  - [x] Delete
+- [x] Data
+  - [x] Index
+  - [x] Create
+  - [x] Read
+  - [x] Update
+  - [x] Delete
+  - [x] Helper Methods
     - [x] Send
-    - [] Next
-    - [] Last
-    - [] Previous
-  - [] Readable
-  - [] Writable
+    - [x] Next
+    - [x] Last
+    - [x] Previous
 - [] Groups
   - [] Create
   - [] Read
