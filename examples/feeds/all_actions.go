@@ -36,7 +36,7 @@ func prepare() {
 }
 
 func render(label string, f *aio.Feed) {
-	sfeed, _ := json.Marshal(f)
+	sfeed, _ := json.MarshalIndent(f, "", "  ")
 	fmt.Printf("--- %v\n", label)
 	fmt.Println(string(sfeed))
 }
