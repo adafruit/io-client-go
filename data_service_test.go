@@ -118,3 +118,29 @@ func TestDataSend(t *testing.T) {
 	assert.Equal(1, datapoint.ID)
 	assert.Equal(val, datapoint.Value)
 }
+
+func TestDataGet(t *testing.T) {
+	setup()
+	defer teardown()
+
+	// prepare endpoint URL for just this request
+	mux.HandleFunc("/api/v1/feeds/temperature/data/1",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	client.SetFeed(&aio.Feed{Key: "temperature"})
+
+	datapoint, response, err := client.Data.Get(1)
+
+	assert.Nil(err)
+	assert.NotNil(datapoint)
+	assert.NotNil(response)
+
+	assert.Equal(1, datapoint.ID)
+	assert.Equal(json.Number("67.112"), datapoint.Value)
+}

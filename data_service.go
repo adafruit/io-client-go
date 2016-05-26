@@ -1,6 +1,9 @@
 package adafruitio
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type DataService struct {
 	client *Client
@@ -46,6 +49,34 @@ func (s *DataService) All() ([]*DataPoint, *Response, error) {
 
 	return datas, resp, nil
 }
+
+// Get(id int)
+func (s *DataService) Get(id int) (*DataPoint, *Response, error) {
+	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", id))
+	if ferr != nil {
+		return nil, nil, ferr
+	}
+
+	req, rerr := s.client.NewRequest("GET", path, nil)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var data DataPoint
+	resp, err := s.client.Do(req, &data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &data, resp, nil
+}
+
+// Update(*DataPoint)
+// Delete(id int)
+//
+// Next()
+// Prev()
+// Last()
 
 // POST /feeds/{feed_id}/data
 //
