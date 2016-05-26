@@ -144,3 +144,79 @@ func TestDataGet(t *testing.T) {
 	assert.Equal(1, datapoint.ID)
 	assert.Equal(json.Number("67.112"), datapoint.Value)
 }
+
+func TestDataDelete(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/feeds/test/data/1",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "DELETE")
+		},
+	)
+
+	assert := assert.New(t)
+
+	client.SetFeed(&aio.Feed{Key: "test"})
+
+	response, err := client.Data.Delete(1)
+
+	assert.Nil(err)
+	assert.NotNil(response)
+
+	assert.Equal(200, response.StatusCode)
+}
+
+func TestDataQueue(t *testing.T) {
+	setup()
+	defer teardown()
+
+	// prepare endpoint URL for just this request
+	mux.HandleFunc("/api/v1/feeds/temperature/data/next",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			fmt.Fprint(w, `{"id":1, "value":"1"}`)
+		},
+	)
+
+	mux.HandleFunc("/api/v1/feeds/temperature/data/prev",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			fmt.Fprint(w, `{"id":2, "value":"2"}`)
+		},
+	)
+
+	mux.HandleFunc("/api/v1/feeds/temperature/data/last",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			fmt.Fprint(w, `{"id":3, "value":"3"}`)
+		},
+	)
+	assert := assert.New(t)
+
+	client.SetFeed(&aio.Feed{Key: "temperature"})
+
+	var (
+		datapoint *aio.DataPoint
+		response  *aio.Response
+		err       error
+	)
+
+	datapoint, response, err = client.Data.Next()
+	assert.Nil(err)
+	assert.NotNil(response)
+	assert.Equal(1, datapoint.ID)
+	assert.Equal(json.Number("1"), datapoint.Value)
+
+	datapoint, response, err = client.Data.Prev()
+	assert.Nil(err)
+	assert.NotNil(response)
+	assert.Equal(2, datapoint.ID)
+	assert.Equal(json.Number("2"), datapoint.Value)
+
+	datapoint, response, err = client.Data.Last()
+	assert.Nil(err)
+	assert.NotNil(response)
+	assert.Equal(3, datapoint.ID)
+	assert.Equal(json.Number("3"), datapoint.Value)
+}

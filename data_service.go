@@ -71,12 +71,87 @@ func (s *DataService) Get(id int) (*DataPoint, *Response, error) {
 	return &data, resp, nil
 }
 
-// Update(*DataPoint)
+// PATCH /feeds/{feed_id}/data/{data_id}
+//
+// Update takes an ID and a Data record, updates the record idendified by ID,
+// and returns an new, updated record instance or an error.
+func (s *DataService) Update(id interface{}, data *DataPoint) (*DataPoint, *Response, error) {
+	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", id))
+	if ferr != nil {
+		return nil, nil, ferr
+	}
+
+	req, rerr := s.client.NewRequest("PATCH", path, data)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var updatedData DataPoint
+	resp, err := s.client.Do(req, &updatedData)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &updatedData, resp, nil
+}
+
 // Delete(id int)
 //
-// Next()
-// Prev()
-// Last()
+// Delete the Data identified by the given ID.
+func (s *DataService) Delete(id int) (*Response, error) {
+	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", id))
+	if ferr != nil {
+		return nil, ferr
+	}
+
+	req, rerr := s.client.NewRequest("DELETE", path, nil)
+	if rerr != nil {
+		return nil, rerr
+	}
+
+	resp, err := s.client.Do(req, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// private method for handling the Next, Prev, and Last commands
+func (s *DataService) retrieve(command string) (*DataPoint, *Response, error) {
+	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", command))
+	if ferr != nil {
+		return nil, nil, ferr
+	}
+
+	req, rerr := s.client.NewRequest("GET", path, nil)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var data DataPoint
+	resp, err := s.client.Do(req, &data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &data, resp, nil
+}
+
+// Get the next Data in the queue.
+func (s *DataService) Next() (*DataPoint, *Response, error) {
+	return s.retrieve("next")
+}
+
+// Get the previous Data in the queue.
+func (s *DataService) Prev() (*DataPoint, *Response, error) {
+	return s.retrieve("prev")
+}
+
+// Get the last Data in the queue.
+func (s *DataService) Last() (*DataPoint, *Response, error) {
+	return s.retrieve("last")
+}
 
 // POST /feeds/{feed_id}/data
 //
