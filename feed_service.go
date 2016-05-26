@@ -1,12 +1,22 @@
 package adafruitio
 
-import "fmt"
+import (
+	"fmt"
+	"path"
+)
 
 type FeedService struct {
-	client *Client
+	CurrentFeed *Feed
 
-	// the name or ID of the feed
-	Name string
+	client *Client
+}
+
+func (s *FeedService) Path(part string) (string, error) {
+	ferr := s.client.checkFeed()
+	if ferr != nil {
+		return "", ferr
+	}
+	return path.Join(fmt.Sprintf("api/v1/feeds/%v", s.CurrentFeed.Key), part), nil
 }
 
 type Feed struct {

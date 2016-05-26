@@ -42,8 +42,8 @@ import (
 
 // Add the API call you want to examine here to see it output at the command line.
 func CallAPI(client *adafruitio.Client) {
-	client.SetFeed("beta-test")
-	client.Data.Create(&adafruitio.DataPoint{Value: json.Number("22")})
+	client.SetFeed(&adafruitio.Feed{Key: "beta-test"})
+	client.Data.Send(&adafruitio.DataPoint{Value: json.Number("22")})
 }
 
 func main() {

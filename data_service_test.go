@@ -31,7 +31,7 @@ func TestData_MissingFeed(t *testing.T) {
 	assert.Nil(datapoint)
 	assert.Nil(response)
 
-	assert.Equal(err.Error(), "Feed.Name cannot be empty")
+	assert.Equal(err.Error(), "CurrentFeed must be set")
 }
 
 func TestData_Unauthenticated(t *testing.T) {
@@ -54,7 +54,7 @@ func TestData_Unauthenticated(t *testing.T) {
 	assert.Nil(datapoint)
 	assert.Nil(response)
 
-	assert.Equal(err.Error(), "Feed.Name cannot be empty")
+	assert.Equal(err.Error(), "CurrentFeed must be set")
 }
 
 func TestDataCreate(t *testing.T) {
@@ -71,7 +71,7 @@ func TestDataCreate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed("temperature")
+	client.SetFeed(&aio.Feed{Key: "temperature"})
 
 	val := json.Number("67.112")
 
@@ -102,7 +102,7 @@ func TestDataSend(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed("temperature")
+	client.SetFeed(&aio.Feed{Key: "temperature"})
 
 	val := json.Number("67.112")
 

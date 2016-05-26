@@ -1,9 +1,6 @@
 package adafruitio
 
-import (
-	"encoding/json"
-	"fmt"
-)
+import "encoding/json"
 
 type DataService struct {
 	client *Client
@@ -26,26 +23,47 @@ type DataPoint struct {
 	CreatedEpoch float64     `json:"created_epoch,omitempty"`
 }
 
-// POST /feeds/{feed_id}/data
+// GET /feeds/{feed_id}/data
 //
-// Create new Data on an existing Feed
-func (d *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
-	// feed name must be set before Data interface can be called
-	ferr := d.client.checkFeed()
+// Get all Data for an existing Fees.
+func (s *DataService) All() ([]*DataPoint, *Response, error) {
+	path, ferr := s.client.Feed.Path("/data")
 	if ferr != nil {
 		return nil, nil, ferr
 	}
 
-	path := fmt.Sprintf("api/v1/feeds/%v/data", d.client.Feed.Name)
+	req, rerr := s.client.NewRequest("GET", path, nil)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
 
-	req, rerr := d.client.NewRequest("POST", path, dp)
+	// request populates Feed slice
+	datas := make([]*DataPoint, 0)
+	resp, err := s.client.Do(req, &datas)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return datas, resp, nil
+}
+
+// POST /feeds/{feed_id}/data
+//
+// Create new Data on an existing Feed
+func (s *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
+	path, ferr := s.client.Feed.Path("/data")
+	if ferr != nil {
+		return nil, nil, ferr
+	}
+
+	req, rerr := s.client.NewRequest("POST", path, dp)
 	if rerr != nil {
 		return nil, nil, rerr
 	}
 
 	// request populates a new datapoint
 	point := &DataPoint{}
-	resp, err := d.client.Do(req, point)
+	resp, err := s.client.Do(req, point)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -55,22 +73,20 @@ func (d *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
 
 // POST /feeds/{feed_id}/send
 //
-// Create new Data and Feed.
-func (d *DataService) Send(dp *DataPoint) (*DataPoint, *Response, error) {
-	ferr := d.client.checkFeed()
+// Create new Data point on the CurrentFeed, also create the Feed if necessary.
+func (s *DataService) Send(dp *DataPoint) (*DataPoint, *Response, error) {
+	path, ferr := s.client.Feed.Path("/data/send")
 	if ferr != nil {
 		return nil, nil, ferr
 	}
 
-	path := fmt.Sprintf("api/v1/feeds/%v/data/send", d.client.Feed.Name)
-
-	req, rerr := d.client.NewRequest("POST", path, dp)
+	req, rerr := s.client.NewRequest("POST", path, dp)
 	if rerr != nil {
 		return nil, nil, rerr
 	}
 
 	point := &DataPoint{}
-	resp, err := d.client.Do(req, point)
+	resp, err := s.client.Do(req, point)
 	if err != nil {
 		return nil, nil, err
 	}

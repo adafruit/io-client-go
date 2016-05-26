@@ -72,14 +72,14 @@ func NewClient(key string) *Client {
 	return c
 }
 
-func (c *Client) SetFeed(feed string) {
-	c.Feed.Name = feed
+func (c *Client) SetFeed(feed *Feed) {
+	c.Feed.CurrentFeed = feed
 }
 
 // Feed must be set before making calls to the Data service
 func (c *Client) checkFeed() error {
-	if c.Feed.Name == "" {
-		return fmt.Errorf("Feed.Name cannot be empty")
+	if c.Feed.CurrentFeed == nil {
+		return fmt.Errorf("CurrentFeed must be set")
 	}
 	return nil
 }
