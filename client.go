@@ -29,8 +29,9 @@ type Client struct {
 	UserAgent string
 
 	// Services that make up adafruit io.
-	Data *DataService
-	Feed *FeedService
+	Data  *DataService
+	Feed  *FeedService
+	Group *GroupService
 }
 
 // Response wraps http.Response and adds fields unique to Adafruit's API.
@@ -38,7 +39,7 @@ type Response struct {
 	*http.Response
 }
 
-func (r *Response) debug() {
+func (r *Response) Debug() {
 	all, _ := ioutil.ReadAll(r.Body)
 	fmt.Println("---")
 	fmt.Println(string(all))
@@ -68,6 +69,7 @@ func NewClient(key string) *Client {
 
 	c.Data = &DataService{client: c}
 	c.Feed = &FeedService{client: c}
+	c.Group = &GroupService{client: c}
 
 	return c
 }

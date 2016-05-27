@@ -18,7 +18,8 @@ API v1 Endpoints
     - [x] Last
     - [x] Previous
 - [] Groups
-  - [] Create
-  - [] Read
-  - [] Update
-  - [] Delete
+  - [x] Index
+  - [x] Create
+  - [ ] Read
+  - [ ] Update
+  - [ ] Delete
