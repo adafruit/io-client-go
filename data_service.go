@@ -28,7 +28,7 @@ type DataPoint struct {
 
 // GET /feeds/{feed_id}/data
 //
-// Get all Data for an existing Fees.
+// Get all Data for an existing Feed.
 func (s *DataService) All() ([]*DataPoint, *Response, error) {
 	path, ferr := s.client.Feed.Path("/data")
 	if ferr != nil {

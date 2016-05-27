@@ -23,6 +23,8 @@ var (
 )
 
 func prepare() {
+	rand.Seed(time.Now().UnixNano())
+
 	flag.StringVar(&useURL, "url", "", "Adafruit IO URL")
 	flag.StringVar(&key, "key", "", "your Adafruit IO key")
 	flag.StringVar(&feedName, "feed", "", "the key of the feed to send to")
@@ -50,7 +52,6 @@ func prepare() {
 }
 
 func rval() string {
-	rand.Seed(time.Now().UnixNano())
 	return fmt.Sprintf("%f", rand.Float32()*100.0)
 }
 
