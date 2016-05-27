@@ -1,5 +1,7 @@
 package adafruitio
 
+import "fmt"
+
 /*
 [
   {
@@ -82,4 +84,58 @@ func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
 	}
 
 	return &group, resp, nil
+}
+
+// Get the Group record identified by the given ID
+func (s *GroupService) Get(id interface{}) (*Group, *Response, error) {
+	path := fmt.Sprintf("api/v1/groups/%v", id)
+
+	req, rerr := s.client.NewRequest("GET", path, nil)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var group Group
+	resp, err := s.client.Do(req, &group)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &group, resp, nil
+}
+
+// Update takes an ID and a Group record, updates it, and returns an updated
+// record instance or an error.
+func (s *GroupService) Update(id interface{}, group *Group) (*Group, *Response, error) {
+	path := fmt.Sprintf("api/v1/groups/%v", id)
+
+	req, rerr := s.client.NewRequest("PATCH", path, group)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var updatedGroup Group
+	resp, err := s.client.Do(req, &updatedGroup)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &updatedGroup, resp, nil
+}
+
+// Delete the Group identified by the given ID.
+func (s *GroupService) Delete(id interface{}) (*Response, error) {
+	path := fmt.Sprintf("api/v1/groups/%v", id)
+
+	req, rerr := s.client.NewRequest("DELETE", path, nil)
+	if rerr != nil {
+		return nil, rerr
+	}
+
+	resp, err := s.client.Do(req, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }

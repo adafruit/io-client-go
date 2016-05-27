@@ -59,6 +59,10 @@ func ShowAll(client *aio.Client) {
 	}
 }
 
+func pause() {
+	time.Sleep(2 * time.Second)
+}
+
 func main() {
 	prepare()
 
@@ -66,11 +70,10 @@ func main() {
 	client.BaseURL, _ = url.Parse(useURL)
 
 	ShowAll(client)
+	pause()
 
-	var g *aio.Group
-	var name string
-
-	name = fmt.Sprintf("a_new_group_%d", rand.Int())
+	// CREATE
+	name := fmt.Sprintf("a_new_group_%d", rand.Int())
 	fmt.Printf("CREATING %v\n", name)
 	g, resp, err := client.Group.Create(&aio.Group{Name: name})
 	if err != nil {
@@ -80,6 +83,40 @@ func main() {
 	} else if resp.StatusCode > 299 {
 		fmt.Printf("Unexpected status: %v", resp.Status)
 		panic(fmt.Errorf("failed to create group"))
+	} else {
+		fmt.Println("ok")
 	}
-	render("new group", g)
+	pause()
+
+	// GET
+	newg, _, err := client.Group.Get(g.ID)
+	if err != nil {
+		panic(err)
+	}
+	render("new group", newg)
+	pause()
+
+	// UPDATE (only Name and Description can be modified)
+	g.Name = fmt.Sprintf("name_changed_to_%d", rand.Int())
+	g.Description = "Now this group has a description."
+
+	fmt.Printf("changing name to %v\n", g.Name)
+	newg, _, err = client.Group.Update(g.ID, g)
+	if err != nil {
+		panic(err)
+	}
+	render("updated group", newg)
+	pause()
+
+	// DELETE
+	time.Sleep(2 * time.Second)
+	title("deleting group")
+	_, err = client.Group.Delete(newg.ID)
+	if err == nil {
+		fmt.Println("ok")
+	}
+	pause()
+
+	// SHOW ALL
+	ShowAll(client)
 }
