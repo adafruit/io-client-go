@@ -62,7 +62,7 @@ func (s *GroupService) All() ([]*Group, *Response, error) {
 	groups := make([]*Group, 0)
 	resp, err := s.client.Do(req, &groups)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return groups, resp, nil
@@ -80,7 +80,7 @@ func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
 	var group Group
 	resp, err := s.client.Do(req, &group)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return &group, resp, nil
@@ -98,7 +98,7 @@ func (s *GroupService) Get(id interface{}) (*Group, *Response, error) {
 	var group Group
 	resp, err := s.client.Do(req, &group)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return &group, resp, nil
@@ -117,7 +117,7 @@ func (s *GroupService) Update(id interface{}, group *Group) (*Group, *Response, 
 	var updatedGroup Group
 	resp, err := s.client.Do(req, &updatedGroup)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return &updatedGroup, resp, nil

@@ -44,7 +44,7 @@ func (s *DataService) All() ([]*DataPoint, *Response, error) {
 	datas := make([]*DataPoint, 0)
 	resp, err := s.client.Do(req, &datas)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return datas, resp, nil
@@ -65,7 +65,7 @@ func (s *DataService) Get(id int) (*DataPoint, *Response, error) {
 	var data DataPoint
 	resp, err := s.client.Do(req, &data)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return &data, resp, nil
@@ -89,7 +89,7 @@ func (s *DataService) Update(id interface{}, data *DataPoint) (*DataPoint, *Resp
 	var updatedData DataPoint
 	resp, err := s.client.Do(req, &updatedData)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return &updatedData, resp, nil
@@ -132,7 +132,7 @@ func (s *DataService) retrieve(command string) (*DataPoint, *Response, error) {
 	var data DataPoint
 	resp, err := s.client.Do(req, &data)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return &data, resp, nil
@@ -171,7 +171,7 @@ func (s *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
 	point := &DataPoint{}
 	resp, err := s.client.Do(req, point)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return point, resp, nil
@@ -194,7 +194,7 @@ func (s *DataService) Send(dp *DataPoint) (*DataPoint, *Response, error) {
 	point := &DataPoint{}
 	resp, err := s.client.Do(req, point)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return point, resp, nil

@@ -50,7 +50,7 @@ func (s *FeedService) All() ([]*Feed, *Response, error) {
 	feeds := make([]*Feed, 0)
 	resp, err := s.client.Do(req, &feeds)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return feeds, resp, nil
@@ -68,7 +68,7 @@ func (s *FeedService) Get(id interface{}) (*Feed, *Response, error) {
 	var feed Feed
 	resp, err := s.client.Do(req, &feed)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return &feed, resp, nil
@@ -85,7 +85,7 @@ func (s *FeedService) Create(feed *Feed) (*Feed, *Response, error) {
 
 	resp, err := s.client.Do(req, feed)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return feed, resp, nil
@@ -104,7 +104,7 @@ func (s *FeedService) Update(id interface{}, feed *Feed) (*Feed, *Response, erro
 	var updatedFeed Feed
 	resp, err := s.client.Do(req, &updatedFeed)
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, err
 	}
 
 	return &updatedFeed, resp, nil
