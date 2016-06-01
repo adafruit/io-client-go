@@ -1,7 +1,5 @@
+// Demo showing feed listing, creation, updating, and deletion.
 package main
-
-// Run with:
-//   go run get_feed.go -key "MY AIO KEY" -feed "feed name, key, or ID"
 
 import (
 	"encoding/json"

@@ -1,7 +1,5 @@
+// Demo showing Data listing, creation, updating, and deletion.
 package main
-
-// Run with:
-//   go run send_data.go -key "MY AIO KEY" -feed "temp" -value "98.6"
 
 import (
 	"encoding/json"
@@ -16,10 +14,11 @@ import (
 )
 
 var (
-	useURL   string
-	key      string
-	feedName string
-	value    string
+	useURL      string
+	key         string
+	feedName    string
+	useRealFeed bool
+	value       string
 )
 
 func prepare() {
@@ -27,7 +26,7 @@ func prepare() {
 
 	flag.StringVar(&useURL, "url", "", "Adafruit IO URL")
 	flag.StringVar(&key, "key", "", "your Adafruit IO key")
-	flag.StringVar(&feedName, "feed", "", "the key of the feed to send to")
+	flag.StringVar(&feedName, "feed", "", "the key of the feed to manipulate")
 	flag.StringVar(&value, "value", "", "the value to send")
 
 	if useURL == "" {
@@ -46,6 +45,9 @@ func prepare() {
 	if feedName == "" {
 		// generate feed name
 		feedName = fmt.Sprintf("beta-test-%v", fmt.Sprintf("%06d", rand.Int())[0:6])
+		useRealFeed = false
+	} else {
+		useRealFeed = true
 	}
 
 	flag.Parse()
@@ -55,7 +57,7 @@ func rval() string {
 	return fmt.Sprintf("%f", rand.Float32()*100.0)
 }
 
-func render(label string, d *aio.DataPoint) {
+func render(label string, d *aio.Data) {
 	dbytes, _ := json.MarshalIndent(d, "", "  ")
 	fmt.Printf("--- %v\n", label)
 	fmt.Println(string(dbytes))
@@ -79,7 +81,7 @@ func main() {
 
 	// create a data point on an existing Feed, create Feed if needed
 	client.SetFeed(feed)
-	val := &aio.DataPoint{Value: json.Number(value)}
+	val := &aio.Data{Value: value}
 
 	title("Create and Check")
 
@@ -98,7 +100,7 @@ func main() {
 	render("found point", ndp)
 
 	// update point
-	client.Data.Update(dp.ID, &aio.DataPoint{Value: json.Number(rval())})
+	client.Data.Update(dp.ID, &aio.Data{Value: rval()})
 
 	// reload
 	ndp, _, err = client.Data.Get(dp.ID)
@@ -111,7 +113,7 @@ func main() {
 
 	// Generate some more Data to fill out the stream
 	for i := 0; i < 4; i += 1 {
-		client.Data.Create(&aio.DataPoint{Value: json.Number(rval())})
+		client.Data.Create(&aio.Data{Value: rval()})
 	}
 
 	// Display all Data in the stream

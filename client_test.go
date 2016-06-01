@@ -70,12 +70,6 @@ func TestClientInitiation(t *testing.T) {
 	assert.Equal("GIVEN KEY", c.APIKey, "expected to find GIVEN KEY")
 }
 
-func ExampleNewClient() {
-	c := NewClient("GIVEN KEY")
-	fmt.Println(c.APIKey)
-	// Output: GIVEN KEY
-}
-
 func TestClientAuthentication(t *testing.T) {
 	setup()
 	defer teardown()

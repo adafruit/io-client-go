@@ -27,7 +27,6 @@ For example:
 */
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -43,7 +42,7 @@ import (
 // Add the API call you want to examine here to see it output at the command line.
 func CallAPI(client *adafruitio.Client) {
 	client.SetFeed(&adafruitio.Feed{Key: "beta-test"})
-	client.Data.Send(&adafruitio.Data{Value: json.Number("22")})
+	client.Data.Send(&adafruitio.Data{Value: "22"})
 }
 
 func main() {
@@ -62,7 +61,7 @@ func main() {
 	defer ts.Close()
 
 	var key string
-	flag.StringVar(&key, "key", "", "you Adafruit IO key")
+	flag.StringVar(&key, "key", "", "your Adafruit IO key")
 	flag.Parse()
 
 	if key == "" {

@@ -6,17 +6,19 @@ import (
 )
 
 type FeedService struct {
+	// CurrentFeed is the Feed used for all Data access.
 	CurrentFeed *Feed
 
 	client *Client
 }
 
-func (s *FeedService) Path(part string) (string, error) {
+// Path generates a Feed-specific path with the given suffix.
+func (s *FeedService) Path(suffix string) (string, error) {
 	ferr := s.client.checkFeed()
 	if ferr != nil {
 		return "", ferr
 	}
-	return path.Join(fmt.Sprintf("api/v1/feeds/%v", s.CurrentFeed.Key), part), nil
+	return path.Join(fmt.Sprintf("api/v1/feeds/%v", s.CurrentFeed.Key), suffix), nil
 }
 
 type Feed struct {
@@ -56,7 +58,8 @@ func (s *FeedService) All() ([]*Feed, *Response, error) {
 	return feeds, resp, nil
 }
 
-// Get the Feed record identified by the given ID
+// Get returns the Feed record identified by the given parameter. Parameter can
+// be the Feed's Name, Key, or ID.
 func (s *FeedService) Get(id interface{}) (*Feed, *Response, error) {
 	path := fmt.Sprintf("api/v1/feeds/%v", id)
 
@@ -93,6 +96,8 @@ func (s *FeedService) Create(feed *Feed) (*Feed, *Response, error) {
 
 // Update takes an ID and a Feed record, updates it, and returns an updated
 // record instance or an error.
+//
+// Only the Feed Name and Description can be modified.
 func (s *FeedService) Update(id interface{}, feed *Feed) (*Feed, *Response, error) {
 	path := fmt.Sprintf("api/v1/feeds/%v", id)
 

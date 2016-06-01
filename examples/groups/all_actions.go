@@ -1,7 +1,5 @@
+// Demo showing Group listing, creation, updating, and deletion.
 package main
-
-// Run with:
-//   go run get_feed.go -key "MY AIO KEY" -feed "feed name, key, or ID"
 
 import (
 	"encoding/json"
@@ -23,7 +21,7 @@ var (
 func prepare() {
 	rand.Seed(time.Now().UnixNano())
 
-	flag.StringVar(&useURL, "url", "", "Adafruit IO URL")
+	flag.StringVar(&useURL, "url", "", "Adafruit IO URL. Defaults to https://io.adafruit.com.")
 	flag.StringVar(&key, "key", "", "your Adafruit IO key")
 
 	if useURL == "" {

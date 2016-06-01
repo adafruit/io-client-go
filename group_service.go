@@ -1,37 +1,8 @@
+// GroupService provides CRUD access to Groups.
+
 package adafruitio
 
 import "fmt"
-
-/*
-[
-  {
-    "id": 0,
-    "name": "string",
-    "description": "string",
-    "feeds": [
-      {
-        "id": 0,
-        "name": "string",
-        "key": "string",
-        "description": "string",
-        "unit_type": "string",
-        "unit_symbol": "string",
-        "history": true,
-        "visibility": "private",
-        "license": "string",
-        "enabled": true,
-        "last_value": "string",
-        "status": "string",
-        "group_id": 0,
-        "created_at": "string",
-        "updated_at": "string"
-      }
-    ],
-    "created_at": "string",
-    "updated_at": "string"
-  }
-]
-*/
 
 type Group struct {
 	ID          int      `json:"id,omitempty"`
@@ -49,7 +20,7 @@ type GroupService struct {
 	client *Client
 }
 
-// Get all Groups for the current account.
+// All returns all Groups for the current account.
 func (s *GroupService) All() ([]*Group, *Response, error) {
 	path := "api/v1/groups"
 
@@ -68,7 +39,7 @@ func (s *GroupService) All() ([]*Group, *Response, error) {
 	return groups, resp, nil
 }
 
-// Create a new Group
+// Create makes a new Group and either returns a new Group instance or an error.
 func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
 	path := "api/v1/groups"
 
@@ -86,7 +57,7 @@ func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
 	return &group, resp, nil
 }
 
-// Get the Group record identified by the given ID
+// Get returns the Group record identified by the given ID
 func (s *GroupService) Get(id interface{}) (*Group, *Response, error) {
 	path := fmt.Sprintf("api/v1/groups/%v", id)
 
@@ -104,8 +75,8 @@ func (s *GroupService) Get(id interface{}) (*Group, *Response, error) {
 	return &group, resp, nil
 }
 
-// Update takes an ID and a Group record, updates it, and returns an updated
-// record instance or an error.
+// Update takes an ID and a Group record, updates it, and returns a new Group
+// instance or an error.
 func (s *GroupService) Update(id interface{}, group *Group) (*Group, *Response, error) {
 	path := fmt.Sprintf("api/v1/groups/%v", id)
 

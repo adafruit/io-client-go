@@ -1,7 +1,6 @@
 package adafruitio
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
@@ -71,7 +70,7 @@ func TestDataCreate(t *testing.T) {
 
 	client.SetFeed(&Feed{Key: "temperature"})
 
-	val := json.Number("67.112")
+	val := "67.112"
 
 	dp := &Data{
 		Value: val,
@@ -102,7 +101,7 @@ func TestDataSend(t *testing.T) {
 
 	client.SetFeed(&Feed{Key: "temperature"})
 
-	val := json.Number("67.112")
+	val := "67.112"
 
 	dp := &Data{
 		Value: val,
@@ -140,7 +139,7 @@ func TestDataGet(t *testing.T) {
 	assert.NotNil(response)
 
 	assert.Equal(1, datapoint.ID)
-	assert.Equal(json.Number("67.112"), datapoint.Value)
+	assert.Equal("67.112", datapoint.Value)
 }
 
 func TestDataDelete(t *testing.T) {
@@ -204,17 +203,17 @@ func TestDataQueue(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal(1, datapoint.ID)
-	assert.Equal(json.Number("1"), datapoint.Value)
+	assert.Equal("1", datapoint.Value)
 
 	datapoint, response, err = client.Data.Prev()
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal(2, datapoint.ID)
-	assert.Equal(json.Number("2"), datapoint.Value)
+	assert.Equal("2", datapoint.Value)
 
 	datapoint, response, err = client.Data.Last()
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal(3, datapoint.ID)
-	assert.Equal(json.Number("3"), datapoint.Value)
+	assert.Equal("3", datapoint.Value)
 }

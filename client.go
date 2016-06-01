@@ -82,11 +82,14 @@ func NewClient(key string) *Client {
 	return c
 }
 
+// SetFeed takes a Feed record as a parameter and uses that feed for all
+// subsequent Data related API calls.
+//
+// A Feed must be set before making calls to the Data service.
 func (c *Client) SetFeed(feed *Feed) {
 	c.Feed.CurrentFeed = feed
 }
 
-// Feed must be set before making calls to the Data service
 func (c *Client) checkFeed() error {
 	if c.Feed.CurrentFeed == nil {
 		return fmt.Errorf("CurrentFeed must be set")
@@ -96,10 +99,7 @@ func (c *Client) checkFeed() error {
 
 // CheckResponse checks the API response for errors, and returns them if
 // present. A response is considered an error if it has a status code outside
-// the 200 range. API error responses are expected to have either no response
-// body, or a JSON response body that maps to AIOError. In the event that an
-// unexpected body is received, it will be stored on the Error in the Message
-// field.
+// the 200 range.
 //
 // adapted from https://github.com/google/go-github
 func CheckResponse(r *http.Response) error {
@@ -107,12 +107,6 @@ func CheckResponse(r *http.Response) error {
 		return nil
 	}
 	errorResponse := &ErrorResponse{Response: r}
-
-	// dump, derr := httputil.DumpResponse(r, true)
-	// if derr != nil {
-	// 	log.Fatal(derr)
-	// }
-	// fmt.Printf("%v\n", string(dump))
 
 	// read response body into Error.Message
 	body, _ := ioutil.ReadAll(r.Body)
