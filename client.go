@@ -46,23 +46,31 @@ func (r *Response) Debug() {
 	fmt.Println("---")
 }
 
+type AIOError struct {
+	Message string `json:"error"`
+}
+
 // ErrorResponse reports one or more errors caused by an API request.
 type ErrorResponse struct {
 	Response *http.Response // HTTP response that carried the error message
 	Message  string
+	AIOError *AIOError
 }
 
 func (r *ErrorResponse) Error() string {
-	return fmt.Sprintf("%v %v: %v",
-		r.Response.Request.Method, r.Response.Request.URL,
-		r.Response.StatusCode, r.Message)
+	return fmt.Sprintf(
+		"%v %v %v: %v",
+		r.Response.Request.Method,
+		r.Response.Request.URL,
+		r.Response.StatusCode,
+		r.Message,
+	)
 }
 
 func NewClient(key string) *Client {
 	c := &Client{APIKey: key}
 
-	url, _ := url.Parse(BaseURL)
-	c.BaseURL = url
+	c.BaseURL, _ = url.Parse(BaseURL)
 	c.UserAgent = "Adafruit IO Go Client v0.1"
 
 	c.client = http.DefaultClient
@@ -87,13 +95,11 @@ func (c *Client) checkFeed() error {
 }
 
 // CheckResponse checks the API response for errors, and returns them if
-// present.  A response is considered an error if it has a status code outside
-// the 200 range.  API error responses are expected to have either no response
-// body, or a JSON response body that maps to ErrorResponse.  Any other
-// response body will be silently ignored.
-//
-// The error type will be *RateLimitError for rate limit exceeded errors,
-// and *TwoFactorAuthError for two-factor authentication errors.
+// present. A response is considered an error if it has a status code outside
+// the 200 range. API error responses are expected to have either no response
+// body, or a JSON response body that maps to AIOError. In the event that an
+// unexpected body is received, it will be stored on the Error in the Message
+// field.
 //
 // adapted from https://github.com/google/go-github
 func CheckResponse(r *http.Response) error {
@@ -102,9 +108,25 @@ func CheckResponse(r *http.Response) error {
 	}
 	errorResponse := &ErrorResponse{Response: r}
 
+	// dump, derr := httputil.DumpResponse(r, true)
+	// if derr != nil {
+	// 	log.Fatal(derr)
+	// }
+	// fmt.Printf("%v\n", string(dump))
+
 	// read response body into Error.Message
 	body, _ := ioutil.ReadAll(r.Body)
-	errorResponse.Message = string(body)
+
+	// try to unmarshal error response Body into AIOError record
+	jerr := json.Unmarshal(body, &errorResponse.AIOError)
+	if jerr != nil {
+		fmt.Println("> failed to parse response body as JSON")
+		// failed to unmarhsal API Error, use body as Message
+		errorResponse.Message = string(body)
+	} else {
+		fmt.Println("> parsed response body as JSON", errorResponse.AIOError)
+		errorResponse.Message = errorResponse.AIOError.Message
+	}
 
 	return errorResponse
 }
