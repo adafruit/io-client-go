@@ -10,7 +10,7 @@ type DataService struct {
 }
 
 // DataPoint are what we create in the data service
-type DataPoint struct {
+type Data struct {
 	ID           int         `json:"id,omitempty"`
 	Value        json.Number `json:"value,omitempty"` // number, string, ?
 	Position     string      `json:"position,omitempty"`
@@ -29,7 +29,7 @@ type DataPoint struct {
 // GET /feeds/{feed_id}/data
 //
 // Get all Data for an existing Feed.
-func (s *DataService) All() ([]*DataPoint, *Response, error) {
+func (s *DataService) All() ([]*Data, *Response, error) {
 	path, ferr := s.client.Feed.Path("/data")
 	if ferr != nil {
 		return nil, nil, ferr
@@ -41,7 +41,7 @@ func (s *DataService) All() ([]*DataPoint, *Response, error) {
 	}
 
 	// request populates Feed slice
-	datas := make([]*DataPoint, 0)
+	datas := make([]*Data, 0)
 	resp, err := s.client.Do(req, &datas)
 	if err != nil {
 		return nil, resp, err
@@ -51,7 +51,7 @@ func (s *DataService) All() ([]*DataPoint, *Response, error) {
 }
 
 // Get(id int)
-func (s *DataService) Get(id int) (*DataPoint, *Response, error) {
+func (s *DataService) Get(id int) (*Data, *Response, error) {
 	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", id))
 	if ferr != nil {
 		return nil, nil, ferr
@@ -62,7 +62,7 @@ func (s *DataService) Get(id int) (*DataPoint, *Response, error) {
 		return nil, nil, rerr
 	}
 
-	var data DataPoint
+	var data Data
 	resp, err := s.client.Do(req, &data)
 	if err != nil {
 		return nil, resp, err
@@ -75,7 +75,7 @@ func (s *DataService) Get(id int) (*DataPoint, *Response, error) {
 //
 // Update takes an ID and a Data record, updates the record idendified by ID,
 // and returns an new, updated record instance or an error.
-func (s *DataService) Update(id interface{}, data *DataPoint) (*DataPoint, *Response, error) {
+func (s *DataService) Update(id interface{}, data *Data) (*Data, *Response, error) {
 	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", id))
 	if ferr != nil {
 		return nil, nil, ferr
@@ -86,7 +86,7 @@ func (s *DataService) Update(id interface{}, data *DataPoint) (*DataPoint, *Resp
 		return nil, nil, rerr
 	}
 
-	var updatedData DataPoint
+	var updatedData Data
 	resp, err := s.client.Do(req, &updatedData)
 	if err != nil {
 		return nil, resp, err
@@ -118,7 +118,7 @@ func (s *DataService) Delete(id int) (*Response, error) {
 }
 
 // private method for handling the Next, Prev, and Last commands
-func (s *DataService) retrieve(command string) (*DataPoint, *Response, error) {
+func (s *DataService) retrieve(command string) (*Data, *Response, error) {
 	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", command))
 	if ferr != nil {
 		return nil, nil, ferr
@@ -129,7 +129,7 @@ func (s *DataService) retrieve(command string) (*DataPoint, *Response, error) {
 		return nil, nil, rerr
 	}
 
-	var data DataPoint
+	var data Data
 	resp, err := s.client.Do(req, &data)
 	if err != nil {
 		return nil, resp, err
@@ -139,24 +139,24 @@ func (s *DataService) retrieve(command string) (*DataPoint, *Response, error) {
 }
 
 // Get the next Data in the queue.
-func (s *DataService) Next() (*DataPoint, *Response, error) {
+func (s *DataService) Next() (*Data, *Response, error) {
 	return s.retrieve("next")
 }
 
 // Get the previous Data in the queue.
-func (s *DataService) Prev() (*DataPoint, *Response, error) {
+func (s *DataService) Prev() (*Data, *Response, error) {
 	return s.retrieve("prev")
 }
 
 // Get the last Data in the queue.
-func (s *DataService) Last() (*DataPoint, *Response, error) {
+func (s *DataService) Last() (*Data, *Response, error) {
 	return s.retrieve("last")
 }
 
 // POST /feeds/{feed_id}/data
 //
 // Create new Data on an existing Feed
-func (s *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
+func (s *DataService) Create(dp *Data) (*Data, *Response, error) {
 	path, ferr := s.client.Feed.Path("/data")
 	if ferr != nil {
 		return nil, nil, ferr
@@ -168,7 +168,7 @@ func (s *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
 	}
 
 	// request populates a new datapoint
-	point := &DataPoint{}
+	point := &Data{}
 	resp, err := s.client.Do(req, point)
 	if err != nil {
 		return nil, resp, err
@@ -180,7 +180,7 @@ func (s *DataService) Create(dp *DataPoint) (*DataPoint, *Response, error) {
 // POST /feeds/{feed_id}/send
 //
 // Create new Data point on the CurrentFeed, also create the Feed if necessary.
-func (s *DataService) Send(dp *DataPoint) (*DataPoint, *Response, error) {
+func (s *DataService) Send(dp *Data) (*Data, *Response, error) {
 	path, ferr := s.client.Feed.Path("/data/send")
 	if ferr != nil {
 		return nil, nil, ferr
@@ -191,7 +191,7 @@ func (s *DataService) Send(dp *DataPoint) (*DataPoint, *Response, error) {
 		return nil, nil, rerr
 	}
 
-	point := &DataPoint{}
+	point := &Data{}
 	resp, err := s.client.Do(req, point)
 	if err != nil {
 		return nil, resp, err
