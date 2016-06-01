@@ -1,11 +1,10 @@
-package adafruitio_test
+package adafruitio
 
 import (
 	"fmt"
 	"net/http"
 	"testing"
 
-	"github.com/adafruit/io-client-go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,7 +69,7 @@ func TestFeedCreate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	nfeed := &adafruitio.Feed{Name: "test"}
+	nfeed := &Feed{Name: "test"}
 
 	feed, response, err := client.Feed.Create(nfeed)
 
@@ -95,7 +94,7 @@ func TestFeedUpdate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	feed := &adafruitio.Feed{ID: 1, Name: "test"}
+	feed := &Feed{ID: 1, Name: "test"}
 
 	ufeed, response, err := client.Feed.Update("test", feed)
 

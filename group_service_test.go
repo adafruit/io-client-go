@@ -1,11 +1,10 @@
-package adafruitio_test
+package adafruitio
 
 import (
 	"fmt"
 	"net/http"
 	"testing"
 
-	"github.com/adafruit/io-client-go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -116,7 +115,7 @@ func TestGroupCreate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	ngroup := &adafruitio.Group{Name: "test"}
+	ngroup := &Group{Name: "test"}
 
 	group, response, err := client.Group.Create(ngroup)
 
@@ -141,7 +140,7 @@ func TestGroupUpdate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	group := &adafruitio.Group{ID: 1, Name: "test"}
+	group := &Group{ID: 1, Name: "test"}
 
 	ugroup, response, err := client.Group.Update("test", group)
 

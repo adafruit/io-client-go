@@ -1,4 +1,4 @@
-package adafruitio_test
+package adafruitio
 
 import (
 	"fmt"
@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	aio "github.com/adafruit/io-client-go"
 )
 
 var (
@@ -18,7 +16,7 @@ var (
 	mux *http.ServeMux
 
 	// client is the Adafruit IO client being tested.
-	client *aio.Client
+	client *Client
 
 	// server is a test HTTP server used to provide mock API responses.
 	server *httptest.Server
@@ -33,7 +31,7 @@ func setup() {
 	server = httptest.NewServer(mux)
 
 	// github client configured to use test server
-	client = aio.NewClient("test-key")
+	client = NewClient("test-key")
 	url, _ := url.Parse(server.URL)
 	client.BaseURL = url
 }
@@ -68,8 +66,14 @@ func testBody(t *testing.T, r *http.Request, want string) {
 func TestClientInitiation(t *testing.T) {
 	assert := assert.New(t)
 
-	c := aio.NewClient("GIVEN KEY")
+	c := NewClient("GIVEN KEY")
 	assert.Equal("GIVEN KEY", c.APIKey, "expected to find GIVEN KEY")
+}
+
+func ExampleNewClient() {
+	c := NewClient("GIVEN KEY")
+	fmt.Println(c.APIKey)
+	// Output: GIVEN KEY
 }
 
 func TestClientAuthentication(t *testing.T) {

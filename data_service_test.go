@@ -1,4 +1,4 @@
-package adafruitio_test
+package adafruitio
 
 import (
 	"encoding/json"
@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	aio "github.com/adafruit/io-client-go"
 )
 
 func TestData_MissingFeed(t *testing.T) {
@@ -24,7 +22,7 @@ func TestData_MissingFeed(t *testing.T) {
 
 	assert := assert.New(t)
 
-	dp := &aio.DataPoint{}
+	dp := &Data{}
 	datapoint, response, err := client.Data.Create(dp)
 
 	assert.NotNil(err)
@@ -47,7 +45,7 @@ func TestData_Unauthenticated(t *testing.T) {
 
 	assert := assert.New(t)
 
-	dp := &aio.DataPoint{}
+	dp := &Data{}
 	datapoint, response, err := client.Data.Create(dp)
 
 	assert.NotNil(err)
@@ -71,11 +69,11 @@ func TestDataCreate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&aio.Feed{Key: "temperature"})
+	client.SetFeed(&Feed{Key: "temperature"})
 
 	val := json.Number("67.112")
 
-	dp := &aio.DataPoint{
+	dp := &Data{
 		Value: val,
 	}
 	datapoint, response, err := client.Data.Create(dp)
@@ -102,11 +100,11 @@ func TestDataSend(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&aio.Feed{Key: "temperature"})
+	client.SetFeed(&Feed{Key: "temperature"})
 
 	val := json.Number("67.112")
 
-	dp := &aio.DataPoint{
+	dp := &Data{
 		Value: val,
 	}
 	datapoint, response, err := client.Data.Send(dp)
@@ -133,7 +131,7 @@ func TestDataGet(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&aio.Feed{Key: "temperature"})
+	client.SetFeed(&Feed{Key: "temperature"})
 
 	datapoint, response, err := client.Data.Get(1)
 
@@ -157,7 +155,7 @@ func TestDataDelete(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&aio.Feed{Key: "test"})
+	client.SetFeed(&Feed{Key: "test"})
 
 	response, err := client.Data.Delete(1)
 
@@ -194,11 +192,11 @@ func TestDataQueue(t *testing.T) {
 	)
 	assert := assert.New(t)
 
-	client.SetFeed(&aio.Feed{Key: "temperature"})
+	client.SetFeed(&Feed{Key: "temperature"})
 
 	var (
-		datapoint *aio.DataPoint
-		response  *aio.Response
+		datapoint *Data
+		response  *Response
 		err       error
 	)
 
