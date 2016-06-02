@@ -63,3 +63,6 @@ Copyright (c) 2016 Adafruit Industries. Licensed under the MIT license.
 - Push to the branch (git push origin my-new-feature)
 - Create new Pull Request
 
+---
+
+[adafruit](https://adafruit.com) invests time and resources providing this open source code. please support adafruit and open-source hardware by purchasing products from [adafruit](https://adafruit.com).
