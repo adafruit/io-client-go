@@ -1,5 +1,7 @@
 # talk to adafruit io from Go
 
+[![Build Status](https://travis-ci.org/adafruit/io-client-go.svg?branch=master)](https://travis-ci.org/adafruit/io-client-go)
+
 A go client library for talking to your io.adafruit.com account.
 
 Requires go version 1.2 or better. Running tests requires the github.com/stretchr/testify library, which can be installed with:
