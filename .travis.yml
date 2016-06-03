@@ -1,9 +1,23 @@
+sudo: false
 language: go
 
 go:
   - 1.2
   - 1.6
-
+matrix:
+  include:
+    - go: 1.2.2
+      script:
+        - go get -t -v ./...
+        - go test -v -race ./...
+  fast_finish: true
 install:
-  - go get github.com/stretchr/testify/assert
+  - # this will be handled by the script command below
+script:
+  # install, confirm formatting, "report suspicious constructs", and test
+  - go get -t -v ./...
+  - diff -u <(echo -n) <(gofmt -d -s .)
+  - go tool vet .
+  - go test -v -race ./...
+
 
