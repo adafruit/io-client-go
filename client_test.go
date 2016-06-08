@@ -53,6 +53,20 @@ func testHeader(t *testing.T, r *http.Request, header string, want string) {
 	}
 }
 
+func testQuery(t *testing.T, r *http.Request, field string, want string) {
+	r.ParseForm()
+
+	if len(r.Form[field]) < 1 {
+		t.Errorf("expected Form[%q] to have a value", field)
+		fmt.Printf("FORM: %q\n", r.Form)
+		return
+	}
+
+	if got := r.Form[field][0]; got != want {
+		t.Errorf("Form[%q] returned %s, want %s", field, got, want)
+	}
+}
+
 func testBody(t *testing.T, r *http.Request, want string) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {

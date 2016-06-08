@@ -113,7 +113,7 @@ func main() {
 			client.SetFeed(feed)
 
 			// get all Data for the given Feed
-			data, _, err := client.Data.All()
+			data, _, err := client.Data.All(nil)
 			if err != nil {
 				fmt.Fprintf(w, "ERROR loading data. %v", err.Error())
 				return

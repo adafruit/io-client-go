@@ -19,13 +19,46 @@ type Data struct {
 	CreatedEpoch float64 `json:"created_epoch,omitempty"`
 }
 
+type DataFilter struct {
+	StartTime string `url:"start_time,omitempty"`
+	EndTime   string `url:"end_time,omitempty"`
+}
+
 type DataService struct {
 	client *Client
 }
 
 // All returns all Data for the currently selected Feed. See Client.SetFeed()
 // for details on selecting a Feed.
-func (s *DataService) All() ([]*Data, *Response, error) {
+func (s *DataService) All(opt *DataFilter) ([]*Data, *Response, error) {
+	path, ferr := s.client.Feed.Path("/data")
+	if ferr != nil {
+		return nil, nil, ferr
+	}
+
+	path, oerr := addOptions(path, opt)
+	if oerr != nil {
+		return nil, nil, oerr
+	}
+
+	req, rerr := s.client.NewRequest("GET", path, nil)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	// request populates Feed slice
+	datas := make([]*Data, 0)
+	resp, err := s.client.Do(req, &datas)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return datas, resp, nil
+}
+
+// Search has the same response format as All, but it accepts optional params
+// with which your data can be queried.
+func (s *DataService) Search(filter *DataFilter) ([]*Data, *Response, error) {
 	path, ferr := s.client.Feed.Path("/data")
 	if ferr != nil {
 		return nil, nil, ferr

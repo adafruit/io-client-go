@@ -118,7 +118,7 @@ func main() {
 
 	// Display all Data in the stream
 	title("All Data")
-	dts, _, err := client.Data.All()
+	dts, _, err := client.Data.All(nil)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -163,7 +163,7 @@ func main() {
 	time.Sleep(1 * time.Second)
 
 	title("All Data (updated)")
-	dts, _, err = client.Data.All()
+	dts, _, err = client.Data.All(nil)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -172,4 +172,19 @@ func main() {
 		render(fmt.Sprintf("ID <%v>", data.ID), data)
 	}
 	time.Sleep(2 * time.Second)
+
+	// Now, generate a single point and do a filtered search for it
+	t := time.Now().Unix() // get current time
+	time.Sleep(2 * time.Second)
+	client.Data.Send(&aio.Data{Value: rval()}) // create point 2 seconds later
+
+	title(fmt.Sprintf("Filtered Data, since %v", t))
+	dts, _, err = client.Data.All(&aio.DataFilter{StartTime: fmt.Sprintf("%d", t)})
+	if err != nil {
+		fmt.Println("unable to retrieve data")
+		panic(err)
+	}
+	for _, data := range dts {
+		render(fmt.Sprintf("ID <%v>", data.ID), data)
+	}
 }

@@ -142,6 +142,67 @@ func TestDataGet(t *testing.T) {
 	assert.Equal("67.112", datapoint.Value)
 }
 
+func TestAllDataNoFilter(t *testing.T) {
+	setup()
+	defer teardown()
+
+	// prepare endpoint URL for just this request
+	mux.HandleFunc("/api/v1/feeds/temperature/data",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			fmt.Fprint(w, `[{"id":1, "value":"67.112"}]`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	client.SetFeed(&Feed{Key: "temperature"})
+
+	// with no params
+	datapoints, response, err := client.Data.All(nil)
+	datapoint := datapoints[0]
+
+	assert.Nil(err)
+	assert.NotNil(datapoint)
+	assert.NotNil(response)
+
+	assert.Equal(1, datapoint.ID)
+	assert.Equal("67.112", datapoint.Value)
+}
+
+func TestAllDataFilter(t *testing.T) {
+	setup()
+	defer teardown()
+
+	// prepare endpoint URL for just this request
+	mux.HandleFunc("/api/v1/feeds/temperature/data",
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			testQuery(t, r, "start_time", "2000-01-01")
+			testQuery(t, r, "end_time", "2010-01-01")
+			fmt.Fprint(w, `[{"id":1, "value":"67.112"}]`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	client.SetFeed(&Feed{Key: "temperature"})
+
+	// with no params
+	datapoints, response, err := client.Data.All(&DataFilter{
+		StartTime: "2000-01-01",
+		EndTime:   "2010-01-01",
+	})
+	datapoint := datapoints[0]
+
+	assert.Nil(err)
+	assert.NotNil(datapoint)
+	assert.NotNil(response)
+
+	assert.Equal(1, datapoint.ID)
+	assert.Equal("67.112", datapoint.Value)
+}
+
 func TestDataDelete(t *testing.T) {
 	setup()
 	defer teardown()
