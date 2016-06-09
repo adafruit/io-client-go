@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"runtime"
 
 	"github.com/google/go-querystring/query"
 )
@@ -29,7 +30,7 @@ type Client struct {
 	BaseURL *url.URL
 
 	APIKey    string
-	UserAgent string
+	userAgent string
 
 	// Services that make up adafruit io.
 	Data  *DataService
@@ -74,7 +75,7 @@ func NewClient(key string) *Client {
 	c := &Client{APIKey: key}
 
 	c.BaseURL, _ = url.Parse(BaseURL)
-	c.UserAgent = fmt.Sprintf("Adafruit IO Go Client v%v", Version)
+	c.userAgent = fmt.Sprintf("AdafruitIO-Go/%v (%v %v)", Version, runtime.GOOS, runtime.Version())
 
 	c.client = http.DefaultClient
 
@@ -163,8 +164,8 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	// Authentication v1
 	req.Header.Add(xAIOKeyHeader, c.APIKey)
 
-	if c.UserAgent != "" {
-		req.Header.Add("User-Agent", c.UserAgent)
+	if c.userAgent != "" {
+		req.Header.Add("User-Agent", c.userAgent)
 	}
 
 	return req, nil
