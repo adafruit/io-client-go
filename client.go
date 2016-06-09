@@ -74,7 +74,7 @@ func NewClient(key string) *Client {
 	c := &Client{APIKey: key}
 
 	c.BaseURL, _ = url.Parse(BaseURL)
-	c.UserAgent = "Adafruit IO Go Client v0.1"
+	c.UserAgent = fmt.Sprintf("Adafruit IO Go Client v%v", Version)
 
 	c.client = http.DefaultClient
 
