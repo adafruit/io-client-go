@@ -1,5 +1,6 @@
 # talk to adafruit io from Go
 
+[![GoDoc](http://godoc.org/github.com/adafruit/io-client-go?status.svg)](http://godoc.org/github.com/adafruit/io-client-go)
 [![Build Status](https://travis-ci.org/adafruit/io-client-go.svg?branch=master)](https://travis-ci.org/adafruit/io-client-go)
 
 A go client library for talking to your io.adafruit.com account.
