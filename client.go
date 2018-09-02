@@ -24,7 +24,7 @@ const (
 
 type Client struct {
 	// Base HTTP client used to talk to io.adafruit.com
-	client *http.Client
+	Client *http.Client
 
 	// Base URL for API requests. Defaults to public adafruit io URL.
 	BaseURL *url.URL
@@ -77,7 +77,7 @@ func NewClient(key string) *Client {
 	c.BaseURL, _ = url.Parse(BaseURL)
 	c.userAgent = fmt.Sprintf("AdafruitIO-Go/%v (%v %v)", Version, runtime.GOOS, runtime.Version())
 
-	c.client = http.DefaultClient
+	c.Client = http.DefaultClient
 
 	c.Data = &DataService{client: c}
 	c.Feed = &FeedService{client: c}
@@ -180,7 +180,7 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 // adapted from https://github.com/google/go-github
 func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 
-	resp, err := c.client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
