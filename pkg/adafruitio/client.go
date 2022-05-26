@@ -19,7 +19,7 @@ import (
 
 const (
 	BaseURL       = "https://io.adafruit.com"
-	APIPath       = "/api/v2/"
+	APIPath       = "/api/v2"
 	xAIOKeyHeader = "X-AIO-Key"
 )
 
@@ -31,6 +31,7 @@ type Client struct {
 	baseURL *url.URL
 
 	apiKey    string
+	username  string
 	userAgent string
 
 	// Services that make up adafruit io.
@@ -72,8 +73,8 @@ func (r *ErrorResponse) Error() string {
 	)
 }
 
-func NewClient(key string) *Client {
-	c := &Client{apiKey: key}
+func NewClient(username, key string) *Client {
+	c := &Client{username: username, apiKey: key}
 
 	c.SetBaseURL(BaseURL)
 	c.userAgent = fmt.Sprintf("AdafruitIO-Go/%v (%v %v)", Version, runtime.GOOS, runtime.Version())
@@ -89,11 +90,11 @@ func NewClient(key string) *Client {
 
 // SetBaseURL updates the base URL to use. Mainly here for use in unit testing
 func (c *Client) SetBaseURL(baseURL string) {
-	c.baseURL, _ = url.Parse(baseURL + APIPath)
+	c.baseURL, _ = url.Parse(fmt.Sprintf("%s%s/%s/", baseURL, APIPath, c.username))
 }
 
-func (c *Client) GetAPIKey() string {
-	return c.apiKey
+func (c *Client) GetUserKey() (username string, apikey string) {
+	return c.username, c.apiKey
 }
 
 // SetFeed takes a Feed record as a parameter and uses that feed for all
