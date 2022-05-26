@@ -12,7 +12,7 @@ func TestData_MissingFeed(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/feeds/temperature/data",
+	mux.HandleFunc(APIPath+"feeds/temperature/data",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
@@ -35,7 +35,7 @@ func TestData_Unauthenticated(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/feeds/temperature/data",
+	mux.HandleFunc(APIPath+"feeds/temperature/data",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
@@ -59,7 +59,7 @@ func TestDataCreate(t *testing.T) {
 	defer teardown()
 
 	// prepare endpoint URL for just this request
-	mux.HandleFunc("/api/v1/feeds/temperature/data",
+	mux.HandleFunc(APIPath+"feeds/temperature/data",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
@@ -90,7 +90,7 @@ func TestDataSend(t *testing.T) {
 	defer teardown()
 
 	// prepare endpoint URL for just this request
-	mux.HandleFunc("/api/v1/feeds/temperature/data/send",
+	mux.HandleFunc(APIPath+"feeds/temperature/data/send",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
@@ -121,7 +121,7 @@ func TestDataGet(t *testing.T) {
 	defer teardown()
 
 	// prepare endpoint URL for just this request
-	mux.HandleFunc("/api/v1/feeds/temperature/data/1",
+	mux.HandleFunc(APIPath+"feeds/temperature/data/1",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			fmt.Fprint(w, `{"id":1, "value":"67.112"}`)
@@ -147,7 +147,7 @@ func TestAllDataNoFilter(t *testing.T) {
 	defer teardown()
 
 	// prepare endpoint URL for just this request
-	mux.HandleFunc("/api/v1/feeds/temperature/data",
+	mux.HandleFunc(APIPath+"feeds/temperature/data",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			fmt.Fprint(w, `[{"id":1, "value":"67.112"}]`)
@@ -175,7 +175,7 @@ func TestAllDataFilter(t *testing.T) {
 	defer teardown()
 
 	// prepare endpoint URL for just this request
-	mux.HandleFunc("/api/v1/feeds/temperature/data",
+	mux.HandleFunc(APIPath+"feeds/temperature/data",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			testQuery(t, r, "start_time", "2000-01-01")
@@ -207,7 +207,7 @@ func TestDataDelete(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/feeds/test/data/1",
+	mux.HandleFunc(APIPath+"feeds/test/data/1",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "DELETE")
 		},
@@ -230,21 +230,21 @@ func TestDataQueue(t *testing.T) {
 	defer teardown()
 
 	// prepare endpoint URL for just this request
-	mux.HandleFunc("/api/v1/feeds/temperature/data/next",
+	mux.HandleFunc(APIPath+"feeds/temperature/data/next",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			fmt.Fprint(w, `{"id":1, "value":"1"}`)
 		},
 	)
 
-	mux.HandleFunc("/api/v1/feeds/temperature/data/prev",
+	mux.HandleFunc(APIPath+"feeds/temperature/data/prev",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			fmt.Fprint(w, `{"id":2, "value":"2"}`)
 		},
 	)
 
-	mux.HandleFunc("/api/v1/feeds/temperature/data/last",
+	mux.HandleFunc(APIPath+"feeds/temperature/data/last",
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			fmt.Fprint(w, `{"id":3, "value":"3"}`)

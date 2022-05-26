@@ -18,7 +18,7 @@ func (s *FeedService) Path(suffix string) (string, error) {
 	if ferr != nil {
 		return "", ferr
 	}
-	return path.Join(fmt.Sprintf("api/v1/feeds/%v", s.CurrentFeed.Key), suffix), nil
+	return path.Join(fmt.Sprintf("feeds/%v", s.CurrentFeed.Key), suffix), nil
 }
 
 type Feed struct {
@@ -41,7 +41,7 @@ type Feed struct {
 
 // All lists all available feeds.
 func (s *FeedService) All() ([]*Feed, *Response, error) {
-	path := "api/v1/feeds"
+	path := "feeds"
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -61,7 +61,7 @@ func (s *FeedService) All() ([]*Feed, *Response, error) {
 // Get returns the Feed record identified by the given parameter. Parameter can
 // be the Feed's Name, Key, or ID.
 func (s *FeedService) Get(id interface{}) (*Feed, *Response, error) {
-	path := fmt.Sprintf("api/v1/feeds/%v", id)
+	path := fmt.Sprintf("feeds/%v", id)
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -79,7 +79,7 @@ func (s *FeedService) Get(id interface{}) (*Feed, *Response, error) {
 
 // Create takes a Feed record, creates it, and returns the updated record or an error.
 func (s *FeedService) Create(feed *Feed) (*Feed, *Response, error) {
-	path := "api/v1/feeds"
+	path := "feeds"
 
 	req, rerr := s.client.NewRequest("POST", path, feed)
 	if rerr != nil {
@@ -99,7 +99,7 @@ func (s *FeedService) Create(feed *Feed) (*Feed, *Response, error) {
 //
 // Only the Feed Name and Description can be modified.
 func (s *FeedService) Update(id interface{}, feed *Feed) (*Feed, *Response, error) {
-	path := fmt.Sprintf("api/v1/feeds/%v", id)
+	path := fmt.Sprintf("feeds/%v", id)
 
 	req, rerr := s.client.NewRequest("PATCH", path, feed)
 	if rerr != nil {
@@ -117,7 +117,7 @@ func (s *FeedService) Update(id interface{}, feed *Feed) (*Feed, *Response, erro
 
 // Delete the Feed identified by the given ID.
 func (s *FeedService) Delete(id interface{}) (*Response, error) {
-	path := fmt.Sprintf("api/v1/feeds/%v", id)
+	path := fmt.Sprintf("feeds/%v", id)
 
 	req, rerr := s.client.NewRequest("DELETE", path, nil)
 	if rerr != nil {

@@ -22,7 +22,7 @@ type GroupService struct {
 
 // All returns all Groups for the current account.
 func (s *GroupService) All() ([]*Group, *Response, error) {
-	path := "api/v1/groups"
+	path := "groups"
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -41,7 +41,7 @@ func (s *GroupService) All() ([]*Group, *Response, error) {
 
 // Create makes a new Group and either returns a new Group instance or an error.
 func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
-	path := "api/v1/groups"
+	path := "groups"
 
 	req, rerr := s.client.NewRequest("POST", path, g)
 	if rerr != nil {
@@ -59,7 +59,7 @@ func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
 
 // Get returns the Group record identified by the given ID
 func (s *GroupService) Get(id interface{}) (*Group, *Response, error) {
-	path := fmt.Sprintf("api/v1/groups/%v", id)
+	path := fmt.Sprintf("groups/%v", id)
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -78,7 +78,7 @@ func (s *GroupService) Get(id interface{}) (*Group, *Response, error) {
 // Update takes an ID and a Group record, updates it, and returns a new Group
 // instance or an error.
 func (s *GroupService) Update(id interface{}, group *Group) (*Group, *Response, error) {
-	path := fmt.Sprintf("api/v1/groups/%v", id)
+	path := fmt.Sprintf("groups/%v", id)
 
 	req, rerr := s.client.NewRequest("PATCH", path, group)
 	if rerr != nil {
@@ -96,7 +96,7 @@ func (s *GroupService) Update(id interface{}, group *Group) (*Group, *Response, 
 
 // Delete the Group identified by the given ID.
 func (s *GroupService) Delete(id interface{}) (*Response, error) {
-	path := fmt.Sprintf("api/v1/groups/%v", id)
+	path := fmt.Sprintf("groups/%v", id)
 
 	req, rerr := s.client.NewRequest("DELETE", path, nil)
 	if rerr != nil {

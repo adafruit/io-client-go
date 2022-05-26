@@ -19,6 +19,7 @@ import (
 
 const (
 	BaseURL       = "https://io.adafruit.com"
+	APIPath       = "/api/v2/"
 	xAIOKeyHeader = "X-AIO-Key"
 )
 
@@ -27,9 +28,9 @@ type Client struct {
 	client *http.Client
 
 	// Base URL for API requests. Defaults to public adafruit io URL.
-	BaseURL *url.URL
+	baseURL *url.URL
 
-	APIKey    string
+	apiKey    string
 	userAgent string
 
 	// Services that make up adafruit io.
@@ -72,9 +73,9 @@ func (r *ErrorResponse) Error() string {
 }
 
 func NewClient(key string) *Client {
-	c := &Client{APIKey: key}
+	c := &Client{apiKey: key}
 
-	c.BaseURL, _ = url.Parse(BaseURL)
+	c.SetBaseURL(BaseURL)
 	c.userAgent = fmt.Sprintf("AdafruitIO-Go/%v (%v %v)", Version, runtime.GOOS, runtime.Version())
 
 	c.client = http.DefaultClient
@@ -84,6 +85,15 @@ func NewClient(key string) *Client {
 	c.Group = &GroupService{client: c}
 
 	return c
+}
+
+// SetBaseURL updates the base URL to use. Mainly here for use in unit testing
+func (c *Client) SetBaseURL(baseURL string) {
+	c.baseURL, _ = url.Parse(baseURL + APIPath)
+}
+
+func (c *Client) GetAPIKey() string {
+	return c.apiKey
 }
 
 // SetFeed takes a Feed record as a parameter and uses that feed for all
@@ -142,7 +152,7 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 		return nil, err
 	}
 
-	u := c.BaseURL.ResolveReference(rel)
+	u := c.baseURL.ResolveReference(rel)
 
 	var buf io.ReadWriter
 	if body != nil {
@@ -162,7 +172,7 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	req.Header.Add("Content-Type", "application/json")
 
 	// Authentication v1
-	req.Header.Add(xAIOKeyHeader, c.APIKey)
+	req.Header.Add(xAIOKeyHeader, c.apiKey)
 
 	if c.userAgent != "" {
 		req.Header.Add("User-Agent", c.userAgent)

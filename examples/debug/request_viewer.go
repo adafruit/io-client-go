@@ -13,7 +13,7 @@ For example:
     $ go run examples/debug/request_viewer.go -key "12345ABC"
     2016/05/26 09:10:07 -- received request --
     ---
-    POST /api/v1/feeds/beta-test/data HTTP/1.1
+    POST /api/v2/feeds/beta-test/data HTTP/1.1
     Host: 127.0.0.1:53626
     Accept: application/json
     Accept-Encoding: gzip
@@ -36,7 +36,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/adafruit/io-client-go"
+	adafruitio "github.com/adafruit/io-client-go"
 )
 
 // Add the API call you want to examine here to see it output at the command line.

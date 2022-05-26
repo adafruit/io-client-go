@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,8 +31,7 @@ func setup() {
 
 	// github client configured to use test server
 	client = NewClient("test-key")
-	url, _ := url.Parse(server.URL)
-	client.BaseURL = url
+	client.SetBaseURL(server.URL)
 }
 
 // teardown closes the test HTTP server.
@@ -81,7 +79,7 @@ func TestClientInitiation(t *testing.T) {
 	assert := assert.New(t)
 
 	c := NewClient("GIVEN KEY")
-	assert.Equal("GIVEN KEY", c.APIKey, "expected to find GIVEN KEY")
+	assert.Equal("GIVEN KEY", c.GetAPIKey(), "expected to find GIVEN KEY")
 }
 
 func TestClientAuthentication(t *testing.T) {
