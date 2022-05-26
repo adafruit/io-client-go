@@ -5,29 +5,28 @@
 
 A go client library for talking to your io.adafruit.com account.
 
-Requires go version 1.2 or better. Running tests requires the github.com/stretchr/testify library, which can be installed with:
+Requires go version 1.18 or better. Running tests uses the github.com/stretchr/testify library. To run tests, run:
 
 ```bash
-$ go get github.com/stretchr/testify
+$ go test ./...
 ```
 
 ## Usage
 
 ```go
-import "github.com/adafruit/io-client-go"
+import "github.com/adafruit/io-client-go/v2/pkg/adafruitio"
 ```
 
 The io-client-go repository provides the `adafruitio` package.
 
-Authentication for Adafruit IO is managed by providing your Adafruit IO token
-in the head of all web requests via the `X-AIO-Key` header. This is handled for
+Authentication for Adafruit IO is managed by providing your Adafruit IO username and token. The token is sent in the head of all web requests via the `X-AIO-Key` header. This is handled for
 you by the client library, which expects you API Token when it is initialized.
 
 We recommend keeping the Token in an environment variable to avoid including it
 directly in your code.
 
 ```go
-client := adafruitio.NewClient(os.Getenv("ADAFRUIT_IO_KEY"))
+client := adafruitio.NewClient(os.Getenv("ADAFRUIT_IO_USERNAME"), os.Getenv("ADAFRUIT_IO_KEY"))
 feeds, _, err := adafruitio.Feed.All()
 ```
 
@@ -35,20 +34,19 @@ Some API calls expect parameters, which must be provided when making the call.
 
 ```go
 feed := &aio.Feed{Name: "my-new-feed"}
-client.Feed.Create(newFeed)
+feed := client.Feed.Create(newFeed)
 ```
 
 Data related API calls expect a Feed to be set before the call is made.
 
-**NOTE:** the Feed doesn't have to exist yet if you're using the `Data.Send()`
-method, but it still needs to be set. If you're relying on the Data API to
-create the Feed, make sure you set the `Key` attribute on the new Feed.
 
 ```go
-feed := &aio.Feed{Name: "My New Feed", Key: "my-new-feed"}
-client.SetFeed(newFeed)
-client.Data.Send(&adafruitio.Data{Value: 100})
+feed, _, ferr := client.Feed.Get("my-new-feed")
+client.SetFeed(feed)
+client.Data.Create(&adafruitio.Data{Value: 100})
 ```
+
+More detailed example usage can be found in the [./examples](./examples) directory
 
 For full package documentation, visit the godoc page at https://godoc.org/github.com/adafruit/io-client-go
 
