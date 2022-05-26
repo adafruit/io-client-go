@@ -5,20 +5,21 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"time"
 
-	aio "github.com/adafruit/io-client-go"
+	"github.com/adafruit/io-client-go/v2/pkg/adafruitio"
 )
 
 var (
-	useURL string
-	key    string
+	useURL   string
+	username string
+	key      string
 )
 
 func prepare() {
 	flag.StringVar(&useURL, "url", "", "Adafruit IO URL")
+	flag.StringVar(&username, "user", "", "your Adafruit IO user name")
 	flag.StringVar(&key, "key", "", "your Adafruit IO key")
 
 	if useURL == "" {
@@ -30,10 +31,14 @@ func prepare() {
 		key = os.Getenv("ADAFRUIT_IO_KEY")
 	}
 
+	if username == "" {
+		username = os.Getenv("ADAFRUIT_IO_USERNAME")
+	}
+
 	flag.Parse()
 }
 
-func render(label string, f *aio.Feed) {
+func render(label string, f *adafruitio.Feed) {
 	sfeed, _ := json.MarshalIndent(f, "", "  ")
 	fmt.Printf("--- %v\n", label)
 	fmt.Println(string(sfeed))
@@ -43,7 +48,7 @@ func title(label string) {
 	fmt.Printf("\n\n%v\n\n", label)
 }
 
-func ShowAll(client *aio.Client) {
+func ShowAll(client *adafruitio.Client) {
 	// Get the list of all available feeds
 	feeds, _, err := client.Feed.All()
 	if err != nil {
@@ -59,8 +64,10 @@ func ShowAll(client *aio.Client) {
 func main() {
 	prepare()
 
-	client := aio.NewClient(key)
-	client.BaseURL, _ = url.Parse(useURL)
+	client := adafruitio.NewClient(username, key)
+	if useURL != "" {
+		client.SetBaseURL(useURL)
+	}
 
 	title("All")
 
@@ -69,7 +76,7 @@ func main() {
 
 	title("Create")
 
-	newFeed := &aio.Feed{Name: "my-new-feed", Description: "an example of creating feeds"}
+	newFeed := &adafruitio.Feed{Name: "my-new-feed", Description: "an example of creating feeds"}
 	client.Feed.Create(newFeed)
 	render("NEW FEED", newFeed)
 	time.Sleep(1 * time.Second)
@@ -85,7 +92,7 @@ func main() {
 
 	title("Update")
 
-	updatedFeed, _, _ := client.Feed.Update(newFeed.ID, &aio.Feed{Name: "renamed-new-feed"})
+	updatedFeed, _, _ := client.Feed.Update(newFeed.ID, &adafruitio.Feed{Name: "renamed-new-feed"})
 	render("UPDATED FEED", updatedFeed)
 	time.Sleep(1 * time.Second)
 

@@ -6,15 +6,15 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
-	"net/url"
 	"os"
 	"time"
 
-	aio "github.com/adafruit/io-client-go"
+	"github.com/adafruit/io-client-go/v2/pkg/adafruitio"
 )
 
 var (
 	useURL      string
+	username    string
 	key         string
 	feedName    string
 	useRealFeed bool
@@ -25,6 +25,7 @@ func prepare() {
 	rand.Seed(time.Now().UnixNano())
 
 	flag.StringVar(&useURL, "url", "", "Adafruit IO URL")
+	flag.StringVar(&username, "user", "", "your Adafruit IO user name")
 	flag.StringVar(&key, "key", "", "your Adafruit IO key")
 	flag.StringVar(&feedName, "feed", "", "the key of the feed to manipulate")
 	flag.StringVar(&value, "value", "", "the value to send")
@@ -36,6 +37,10 @@ func prepare() {
 
 	if key == "" {
 		key = os.Getenv("ADAFRUIT_IO_KEY")
+	}
+
+	if username == "" {
+		username = os.Getenv("ADAFRUIT_IO_USERNAME")
 	}
 
 	if value == "" {
@@ -57,7 +62,7 @@ func rval() string {
 	return fmt.Sprintf("%f", rand.Float32()*100.0)
 }
 
-func render(label string, d *aio.Data) {
+func render(label string, d *adafruitio.Data) {
 	dbytes, _ := json.MarshalIndent(d, "", "  ")
 	fmt.Printf("--- %v\n", label)
 	fmt.Println(string(dbytes))
@@ -70,18 +75,19 @@ func title(label string) {
 func main() {
 	prepare()
 
-	client := aio.NewClient(key)
-	client.BaseURL, _ = url.Parse(useURL)
-
+	client := adafruitio.NewClient(username, key)
+	if useURL != "" {
+		client.SetBaseURL(useURL)
+	}
 	feed, _, ferr := client.Feed.Get(feedName)
 	if ferr != nil {
 		fmt.Printf("unable to load Feed with key %v, creating placeholder\n", feedName)
-		feed = &aio.Feed{Key: feedName}
+		feed = &adafruitio.Feed{Key: feedName}
 	}
 
 	// create a data point on an existing Feed, create Feed if needed
 	client.SetFeed(feed)
-	val := &aio.Data{Value: value}
+	val := &adafruitio.Data{Value: value}
 
 	title("Create and Check")
 
@@ -100,7 +106,7 @@ func main() {
 	render("found point", ndp)
 
 	// update point
-	client.Data.Update(dp.ID, &aio.Data{Value: rval()})
+	client.Data.Update(dp.ID, &adafruitio.Data{Value: rval()})
 
 	// reload
 	ndp, _, err = client.Data.Get(dp.ID)
@@ -113,7 +119,7 @@ func main() {
 
 	// Generate some more Data to fill out the stream
 	for i := 0; i < 4; i += 1 {
-		client.Data.Create(&aio.Data{Value: rval()})
+		client.Data.Create(&adafruitio.Data{Value: rval()})
 	}
 
 	// Display all Data in the stream
@@ -176,10 +182,10 @@ func main() {
 	// Now, generate a single point and do a filtered search for it
 	t := time.Now().Unix() // get current time
 	time.Sleep(2 * time.Second)
-	client.Data.Send(&aio.Data{Value: rval()}) // create point 2 seconds later
+	client.Data.Send(&adafruitio.Data{Value: rval()}) // create point 2 seconds later
 
 	title(fmt.Sprintf("Filtered Data, since %v", t))
-	dts, _, err = client.Data.All(&aio.DataFilter{StartTime: fmt.Sprintf("%d", t)})
+	dts, _, err = client.Data.All(&adafruitio.DataFilter{StartTime: fmt.Sprintf("%d", t)})
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)

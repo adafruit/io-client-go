@@ -3,10 +3,9 @@ package adafruitio_test
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 
-	"github.com/adafruit/io-client-go"
+	"github.com/adafruit/io-client-go/v2/pkg/adafruitio"
 )
 
 var (
@@ -16,10 +15,10 @@ var (
 
 func Example() {
 	// Load ADAFRUIT_IO_KEY from environment
-	client := adafruitio.NewClient(os.Getenv("ADAFRUIT_IO_KEY"))
+	client := adafruitio.NewClient(os.Getenv("ADAFRUIT_IO_USERNAME"), os.Getenv("ADAFRUIT_IO_KEY"))
 
 	// set custom API URL
-	client.BaseURL, _ = url.Parse("http://localhost:3002")
+	client.SetBaseURL("http://localhost:3002")
 
 	// Get the list of all available feeds
 	feeds, _, err := client.Feed.All()

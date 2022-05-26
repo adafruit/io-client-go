@@ -10,11 +10,12 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/adafruit/io-client-go"
+	"github.com/adafruit/io-client-go/v2/pkg/adafruitio"
 )
 
 var (
 	aioURL      string
+	aioUsername string
 	aioKey      string
 	feedMatcher = regexp.MustCompile(`/feed/([a-z0-9-]+)`)
 	head        = `
@@ -33,6 +34,7 @@ var (
 // Get command line flags, fallback to environment variables
 func prepare() {
 	flag.StringVar(&aioURL, "url", "", "Adafruit IO URL")
+	flag.StringVar(&aioUsername, "user", "", "your Adafruit IO user name")
 	flag.StringVar(&aioKey, "key", "", "your Adafruit IO key")
 
 	if aioURL == "" {
@@ -44,6 +46,10 @@ func prepare() {
 		aioKey = os.Getenv("ADAFRUIT_IO_KEY")
 	}
 
+	if aioUsername == "" {
+		aioUsername = os.Getenv("ADAFRUIT_IO_USERNAME")
+	}
+
 	flag.Parse()
 }
 
@@ -51,7 +57,7 @@ func main() {
 	prepare()
 
 	// setup AIO client
-	client := adafruitio.NewClient(aioKey)
+	client := adafruitio.NewClient(aioUsername, aioKey)
 
 	// setup server
 	mux := http.NewServeMux()

@@ -33,10 +33,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
-	"net/url"
 	"os"
 
-	adafruitio "github.com/adafruit/io-client-go"
+	"github.com/adafruit/io-client-go/v2/pkg/adafruitio"
 )
 
 // Add the API call you want to examine here to see it output at the command line.
@@ -61,16 +60,24 @@ func main() {
 	defer ts.Close()
 
 	var key string
+	var username string
 	flag.StringVar(&key, "key", "", "your Adafruit IO key")
+	flag.StringVar(&username, "user", "", "your Adafruit IO user name")
 	flag.Parse()
 
 	if key == "" {
 		key = os.Getenv("ADAFRUIT_IO_KEY")
 	}
 
-	client := adafruitio.NewClient(key)
+	if username == "" {
+		username = os.Getenv("ADAFRUIT_IO_USERNAME")
+	}
 
-	client.BaseURL, _ = url.Parse(ts.URL)
+	client := adafruitio.NewClient(username, key)
+
+	if ts.URL != "" {
+		client.SetBaseURL(ts.URL)
+	}
 
 	CallAPI(client)
 }
