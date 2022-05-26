@@ -94,7 +94,7 @@ func main() {
 	pause()
 
 	// GET
-	newg, _, err := client.Group.Get(g.ID)
+	newg, _, err := client.Group.Get(g.Key)
 	if err != nil {
 		panic(err)
 	}
@@ -106,7 +106,7 @@ func main() {
 	g.Description = "Now this group has a description."
 
 	fmt.Printf("changing name to %v\n", g.Name)
-	newg, _, err = client.Group.Update(g.ID, g)
+	newg, _, err = client.Group.Update(g.Key, g)
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +116,7 @@ func main() {
 	// DELETE
 	time.Sleep(2 * time.Second)
 	title("deleting group")
-	_, err = client.Group.Delete(newg.ID)
+	_, err = client.Group.Delete(newg.Key)
 	if err == nil {
 		fmt.Println("ok")
 	}
