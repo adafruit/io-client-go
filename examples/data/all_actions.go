@@ -91,9 +91,9 @@ func main() {
 
 	title("Create and Check")
 
-	dp, _, err := client.Data.Send(val)
+	dp, _, err := client.Data.Create(val)
 	if err != nil {
-		fmt.Println("unable to send data")
+		fmt.Println("unable to create data")
 		panic(err)
 	}
 	render("new point", dp)
@@ -151,6 +151,13 @@ func main() {
 	}
 	render("prev point", ndp)
 
+	ndp, _, err = client.Data.First()
+	if err != nil {
+		fmt.Println("unable to retrieve data")
+		panic(err)
+	}
+	render("first point", ndp)
+
 	ndp, _, err = client.Data.Next()
 	if err != nil {
 		fmt.Println("unable to retrieve data")
@@ -182,7 +189,7 @@ func main() {
 	// Now, generate a single point and do a filtered search for it
 	t := time.Now().Unix() // get current time
 	time.Sleep(2 * time.Second)
-	client.Data.Send(&adafruitio.Data{Value: rval()}) // create point 2 seconds later
+	client.Data.Create(&adafruitio.Data{Value: rval()}) // create point 2 seconds later
 
 	title(fmt.Sprintf("Filtered Data, since %v", t))
 	dts, _, err = client.Data.All(&adafruitio.DataFilter{StartTime: fmt.Sprintf("%d", t)})

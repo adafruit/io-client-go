@@ -92,7 +92,7 @@ func main() {
 
 	title("Update")
 
-	updatedFeed, _, _ := client.Feed.Update(newFeed.ID, &adafruitio.Feed{Name: "renamed-new-feed"})
+	updatedFeed, _, _ := client.Feed.Update(newFeed.Key, &adafruitio.Feed{Name: "renamed-new-feed"})
 	render("UPDATED FEED", updatedFeed)
 	time.Sleep(1 * time.Second)
 
@@ -103,13 +103,13 @@ func main() {
 
 	title("Just the new one")
 
-	feed, _, _ := client.Feed.Get(updatedFeed.ID)
+	feed, _, _ := client.Feed.Get(updatedFeed.Key)
 	render("SHOW", feed)
 	time.Sleep(1 * time.Second)
 
 	title("Delete")
 
-	_, err := client.Feed.Delete(newFeed.ID)
+	_, err := client.Feed.Delete(newFeed.Key)
 	if err == nil {
 		fmt.Println("ok")
 	}

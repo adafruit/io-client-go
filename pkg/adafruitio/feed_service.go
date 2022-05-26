@@ -69,8 +69,8 @@ func (s *FeedService) All() ([]*Feed, *Response, error) {
 
 // Get returns the Feed record identified by the given parameter. Parameter can
 // be the Feed's Name, Key, or ID.
-func (s *FeedService) Get(id interface{}) (*Feed, *Response, error) {
-	path := fmt.Sprintf("feeds/%v", id)
+func (s *FeedService) Get(key string) (*Feed, *Response, error) {
+	path := fmt.Sprintf("feeds/%s", key)
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -107,8 +107,8 @@ func (s *FeedService) Create(feed *Feed) (*Feed, *Response, error) {
 // record instance or an error.
 //
 // Only the Feed Name and Description can be modified.
-func (s *FeedService) Update(id interface{}, feed *Feed) (*Feed, *Response, error) {
-	path := fmt.Sprintf("feeds/%v", id)
+func (s *FeedService) Update(key string, feed *Feed) (*Feed, *Response, error) {
+	path := fmt.Sprintf("feeds/%s", key)
 
 	req, rerr := s.client.NewRequest("PATCH", path, feed)
 	if rerr != nil {
@@ -125,8 +125,8 @@ func (s *FeedService) Update(id interface{}, feed *Feed) (*Feed, *Response, erro
 }
 
 // Delete the Feed identified by the given ID.
-func (s *FeedService) Delete(id interface{}) (*Response, error) {
-	path := fmt.Sprintf("feeds/%v", id)
+func (s *FeedService) Delete(key string) (*Response, error) {
+	path := fmt.Sprintf("feeds/%s", key)
 
 	req, rerr := s.client.NewRequest("DELETE", path, nil)
 	if rerr != nil {
