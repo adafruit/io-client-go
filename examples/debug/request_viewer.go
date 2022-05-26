@@ -10,10 +10,10 @@ safe to use a bogus secret key.
 
 For example:
 
-    $ go run examples/debug/request_viewer.go -key "12345ABC"
+    $ go run examples/debug/request_viewer.go -user "username" -key "12345ABC"
     2016/05/26 09:10:07 -- received request --
     ---
-    POST /api/v2/feeds/beta-test/data HTTP/1.1
+    POST /api/v2/username/feeds/beta-test/data HTTP/1.1
     Host: 127.0.0.1:53626
     Accept: application/json
     Accept-Encoding: gzip
@@ -41,7 +41,7 @@ import (
 // Add the API call you want to examine here to see it output at the command line.
 func CallAPI(client *adafruitio.Client) {
 	client.SetFeed(&adafruitio.Feed{Key: "beta-test"})
-	client.Data.Send(&adafruitio.Data{Value: "22"})
+	client.Data.Create(&adafruitio.Data{Value: "22"})
 }
 
 func main() {

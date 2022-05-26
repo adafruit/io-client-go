@@ -13,12 +13,11 @@ import (
 )
 
 var (
-	useURL      string
-	username    string
-	key         string
-	feedName    string
-	useRealFeed bool
-	value       string
+	useURL   string
+	username string
+	key      string
+	feedName string
+	value    string
 )
 
 func prepare() {
@@ -28,7 +27,7 @@ func prepare() {
 	flag.StringVar(&username, "user", "", "your Adafruit IO user name")
 	flag.StringVar(&key, "key", "", "your Adafruit IO key")
 	flag.StringVar(&feedName, "feed", "", "the key of the feed to manipulate")
-	flag.StringVar(&value, "value", "", "the value to send")
+	flag.StringVar(&value, "value", rval(), "the value to send")
 
 	if useURL == "" {
 		// no arg given, try ENV
@@ -43,19 +42,12 @@ func prepare() {
 		username = os.Getenv("ADAFRUIT_IO_USERNAME")
 	}
 
-	if value == "" {
-		value = rval()
-	}
+	flag.Parse()
 
 	if feedName == "" {
-		// generate feed name
-		feedName = fmt.Sprintf("beta-test-%v", fmt.Sprintf("%06d", rand.Int())[0:6])
-		useRealFeed = false
-	} else {
-		useRealFeed = true
+		panic("A feed name must be specified")
 	}
 
-	flag.Parse()
 }
 
 func rval() string {
@@ -81,13 +73,12 @@ func main() {
 	}
 	feed, _, ferr := client.Feed.Get(feedName)
 	if ferr != nil {
-		fmt.Printf("unable to load Feed with key %v, creating placeholder\n", feedName)
-		feed = &adafruitio.Feed{Key: feedName}
+		panic(ferr)
 	}
 
-	// create a data point on an existing Feed, create Feed if needed
+	// create a data point on an existing Feed
 	client.SetFeed(feed)
-	val := &adafruitio.Data{Value: value}
+	val := &adafruitio.Data{Value: value, FeedKey: feedName}
 
 	title("Create and Check")
 
