@@ -6,8 +6,8 @@ import "fmt"
 type Data struct {
 	ID           int     `json:"id,omitempty"`
 	Value        string  `json:"value,omitempty"`
-	Position     string  `json:"position,omitempty"`
 	FeedID       int     `json:"feed_id,omitempty"`
+	FeedKey      string  `json:"feed_key,omitempty"`
 	GroupID      int     `json:"group_id,omitempty"`
 	Expiration   string  `json:"expiration,omitempty"`
 	Latitude     float64 `json:"lat,omitempty"`

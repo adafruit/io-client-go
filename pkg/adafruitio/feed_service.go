@@ -21,22 +21,31 @@ func (s *FeedService) Path(suffix string) (string, error) {
 	return path.Join(fmt.Sprintf("feeds/%v", s.CurrentFeed.Key), suffix), nil
 }
 
+type Owner struct {
+	ID       int    `json:"id,omitempty"`
+	Username string `json:"username,omitempty"`
+}
+
 type Feed struct {
-	ID          int    `json:"id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Key         string `json:"key,omitempty"`
-	Description string `json:"description,omitempty"`
-	UnitType    string `json:"unit_type,omitempty"`
-	UnitSymbol  string `json:"unit_symbol,omitempty"`
-	History     bool   `json:"history,omitempty"`
-	Visibility  string `json:"visibility,omitempty"`
-	License     string `json:"license,omitempty"`
-	Enabled     bool   `json:"enabled,omitempty"`
-	LastValue   string `json:"last_value,omitempty"`
-	Status      string `json:"status,omitempty"`
-	GroupID     int    `json:"group_id,omitempty"`
-	CreatedAt   string `json:"created_at,omitempty"`
-	UpdatedAt   string `json:"updated_at,omitempty"`
+	ID            int    `json:"id,omitempty"`
+	Name          string `json:"name,omitempty"`
+	Key           string `json:"key,omitempty"`
+	Username      string `json:"username,omitempty"`
+	Owner         *Owner `json:"owner,omitempty"`
+	Description   string `json:"description,omitempty"`
+	UnitType      string `json:"unit_type,omitempty"`
+	UnitSymbol    string `json:"unit_symbol,omitempty"`
+	History       bool   `json:"history,omitempty"`
+	Visibility    string `json:"visibility,omitempty"`
+	License       string `json:"license,omitempty"`
+	Enabled       bool   `json:"enabled,omitempty"`
+	LastValue     string `json:"last_value,omitempty"`
+	Status        string `json:"status,omitempty"`
+	StatusNotify  bool   `json:"status_notify,omitempty"`
+	StatusTimeout int    `json:"status_timeout,omitempty"`
+	Shared        bool   `json:"is_shared,omitempty"`
+	CreatedAt     string `json:"created_at,omitempty"`
+	UpdatedAt     string `json:"updated_at,omitempty"`
 }
 
 // All lists all available feeds.

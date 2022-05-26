@@ -5,15 +5,17 @@ package adafruitio
 import "fmt"
 
 type Group struct {
-	ID          int      `json:"id,omitempty"`
-	Name        string   `json:"name,omitempty"`
-	Description string   `json:"description,omitempty"`
-	CreatedAt   string   `json:"created_at,omitempty"`
-	UpdatedAt   string   `json:"updated_at,omitempty"`
-	Source      string   `json:"source,omitempty"`
-	SourceKeys  []string `json:"source_keys,omitempty"`
-	Feeds       []*Feed  `json:"feeds,omitempty"`
-	Visibility  string   `json:"visibility"`
+	ID          int     `json:"id,omitempty"`
+	Name        string  `json:"name,omitempty"`
+	Key         string  `json:"key,omitempty"`
+	Owner       *Owner  `json:"owner,omitempty"`
+	UserID      int     `json:"user_id,omitempty"`
+	Description string  `json:"description,omitempty"`
+	CreatedAt   string  `json:"created_at,omitempty"`
+	UpdatedAt   string  `json:"updated_at,omitempty"`
+	Feeds       []*Feed `json:"feeds,omitempty"`
+	Visibility  string  `json:"visibility"`
+	Shared      bool    `json:"is_shared,omitempty"`
 }
 
 type GroupService struct {
