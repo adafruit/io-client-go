@@ -35,7 +35,7 @@ import (
 	"net/http/httputil"
 	"os"
 
-	"github.com/adafruit/io-client-go/v2/pkg/adafruitio"
+	adafruitio "github.com/adafruit/io-client-go/v2"
 )
 
 // Add the API call you want to examine here to see it output at the command line.

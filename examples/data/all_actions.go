@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/adafruit/io-client-go/v2/pkg/adafruitio"
+	adafruitio "github.com/adafruit/io-client-go/v2"
 )
 
 var (

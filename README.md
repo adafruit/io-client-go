@@ -13,8 +13,14 @@ $ go test ./...
 
 ## Usage
 
+First, add the package:
+```bash
+$ go get github.com/adafruit/io-client-go/v2
+```
+
+Then import it:
 ```go
-import "github.com/adafruit/io-client-go/v2/pkg/adafruitio"
+import "github.com/adafruit/io-client-go/v2"
 ```
 
 The io-client-go repository provides the `adafruitio` package.
