@@ -1,4 +1,4 @@
-API v1 Endpoints
+API v2 Endpoints
 
 - [x] Feeds
   - [x] Index
@@ -13,13 +13,13 @@ API v1 Endpoints
   - [x] Update
   - [x] Delete
   - [x] Helper Methods
-    - [x] Send
+    - [x] First
     - [x] Next
     - [x] Last
     - [x] Previous
 - [] Groups
   - [x] Index
   - [x] Create
-  - [ ] Read
-  - [ ] Update
-  - [ ] Delete
+  - [X] Read
+  - [X] Update
+  - [X] Delete
