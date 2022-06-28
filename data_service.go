@@ -4,10 +4,10 @@ import "fmt"
 
 // Data are the values contained by a Feed.
 type Data struct {
-	ID           int     `json:"id,omitempty"`
+	ID           string  `json:"id,omitempty"`
 	Value        string  `json:"value,omitempty"`
-	Position     string  `json:"position,omitempty"`
 	FeedID       int     `json:"feed_id,omitempty"`
+	FeedKey      string  `json:"feed_key,omitempty"`
 	GroupID      int     `json:"group_id,omitempty"`
 	Expiration   string  `json:"expiration,omitempty"`
 	Latitude     float64 `json:"lat,omitempty"`
@@ -80,8 +80,8 @@ func (s *DataService) Search(filter *DataFilter) ([]*Data, *Response, error) {
 }
 
 // Get returns a single Data element, identified by the given ID parameter.
-func (s *DataService) Get(id int) (*Data, *Response, error) {
-	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", id))
+func (s *DataService) Get(id string) (*Data, *Response, error) {
+	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%s", id))
 	if ferr != nil {
 		return nil, nil, ferr
 	}
@@ -102,8 +102,8 @@ func (s *DataService) Get(id int) (*Data, *Response, error) {
 
 // Update takes an ID and a Data record, updates the record idendified by ID,
 // and returns a new, updated Data instance.
-func (s *DataService) Update(id interface{}, data *Data) (*Data, *Response, error) {
-	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", id))
+func (s *DataService) Update(id string, data *Data) (*Data, *Response, error) {
+	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%s", id))
 	if ferr != nil {
 		return nil, nil, ferr
 	}
@@ -123,8 +123,8 @@ func (s *DataService) Update(id interface{}, data *Data) (*Data, *Response, erro
 }
 
 // Delete the Data identified by the given ID.
-func (s *DataService) Delete(id int) (*Response, error) {
-	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", id))
+func (s *DataService) Delete(id string) (*Response, error) {
+	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%s", id))
 	if ferr != nil {
 		return nil, ferr
 	}
@@ -170,7 +170,12 @@ func (s *DataService) Next() (*Data, *Response, error) {
 
 // Prev returns the previous Data in the stream.
 func (s *DataService) Prev() (*Data, *Response, error) {
-	return s.retrieve("prev")
+	return s.retrieve("previous")
+}
+
+// First returns the first Data in the stream.
+func (s *DataService) First() (*Data, *Response, error) {
+	return s.retrieve("first")
 }
 
 // Last returns the last Data in the stream.
@@ -191,28 +196,6 @@ func (s *DataService) Create(dp *Data) (*Data, *Response, error) {
 	}
 
 	// request populates a new datapoint
-	point := &Data{}
-	resp, err := s.client.Do(req, point)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return point, resp, nil
-}
-
-// Send adds a new Data value to an existing Feed, or will create the Feed if
-// it doesn't already exist.
-func (s *DataService) Send(dp *Data) (*Data, *Response, error) {
-	path, ferr := s.client.Feed.Path("/data/send")
-	if ferr != nil {
-		return nil, nil, ferr
-	}
-
-	req, rerr := s.client.NewRequest("POST", path, dp)
-	if rerr != nil {
-		return nil, nil, rerr
-	}
-
 	point := &Data{}
 	resp, err := s.client.Do(req, point)
 	if err != nil {

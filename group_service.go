@@ -5,15 +5,17 @@ package adafruitio
 import "fmt"
 
 type Group struct {
-	ID          int      `json:"id,omitempty"`
-	Name        string   `json:"name,omitempty"`
-	Description string   `json:"description,omitempty"`
-	CreatedAt   string   `json:"created_at,omitempty"`
-	UpdatedAt   string   `json:"updated_at,omitempty"`
-	Source      string   `json:"source,omitempty"`
-	SourceKeys  []string `json:"source_keys,omitempty"`
-	Feeds       []*Feed  `json:"feeds,omitempty"`
-	Visibility  string   `json:"visibility"`
+	ID          int     `json:"id,omitempty"`
+	Name        string  `json:"name,omitempty"`
+	Key         string  `json:"key,omitempty"`
+	Owner       *Owner  `json:"owner,omitempty"`
+	UserID      int     `json:"user_id,omitempty"`
+	Description string  `json:"description,omitempty"`
+	CreatedAt   string  `json:"created_at,omitempty"`
+	UpdatedAt   string  `json:"updated_at,omitempty"`
+	Feeds       []*Feed `json:"feeds,omitempty"`
+	Visibility  string  `json:"visibility"`
+	Shared      bool    `json:"is_shared,omitempty"`
 }
 
 type GroupService struct {
@@ -22,7 +24,7 @@ type GroupService struct {
 
 // All returns all Groups for the current account.
 func (s *GroupService) All() ([]*Group, *Response, error) {
-	path := "api/v1/groups"
+	path := "groups"
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -41,7 +43,7 @@ func (s *GroupService) All() ([]*Group, *Response, error) {
 
 // Create makes a new Group and either returns a new Group instance or an error.
 func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
-	path := "api/v1/groups"
+	path := "groups"
 
 	req, rerr := s.client.NewRequest("POST", path, g)
 	if rerr != nil {
@@ -58,8 +60,8 @@ func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
 }
 
 // Get returns the Group record identified by the given ID
-func (s *GroupService) Get(id interface{}) (*Group, *Response, error) {
-	path := fmt.Sprintf("api/v1/groups/%v", id)
+func (s *GroupService) Get(key string) (*Group, *Response, error) {
+	path := fmt.Sprintf("groups/%s", key)
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -77,8 +79,8 @@ func (s *GroupService) Get(id interface{}) (*Group, *Response, error) {
 
 // Update takes an ID and a Group record, updates it, and returns a new Group
 // instance or an error.
-func (s *GroupService) Update(id interface{}, group *Group) (*Group, *Response, error) {
-	path := fmt.Sprintf("api/v1/groups/%v", id)
+func (s *GroupService) Update(key string, group *Group) (*Group, *Response, error) {
+	path := fmt.Sprintf("groups/%s", key)
 
 	req, rerr := s.client.NewRequest("PATCH", path, group)
 	if rerr != nil {
@@ -95,8 +97,8 @@ func (s *GroupService) Update(id interface{}, group *Group) (*Group, *Response, 
 }
 
 // Delete the Group identified by the given ID.
-func (s *GroupService) Delete(id interface{}) (*Response, error) {
-	path := fmt.Sprintf("api/v1/groups/%v", id)
+func (s *GroupService) Delete(key string) (*Response, error) {
+	path := fmt.Sprintf("groups/%s", key)
 
 	req, rerr := s.client.NewRequest("DELETE", path, nil)
 	if rerr != nil {

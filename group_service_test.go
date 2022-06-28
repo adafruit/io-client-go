@@ -12,7 +12,7 @@ func TestGroupAll(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/groups",
+	mux.HandleFunc(serverPattern("groups"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			fmt.Fprint(w, `[
@@ -83,7 +83,7 @@ func TestGroupGet(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/groups/test",
+	mux.HandleFunc(serverPattern("groups/test"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			fmt.Fprint(w, `{"id":1, "name":"test", "feeds": [{"id": 1}]}`)
@@ -106,7 +106,7 @@ func TestGroupCreate(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/groups",
+	mux.HandleFunc(serverPattern("groups"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "name":"test"}`)
@@ -131,7 +131,7 @@ func TestGroupUpdate(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/groups/test",
+	mux.HandleFunc(serverPattern("groups/test"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "PATCH")
 			fmt.Fprint(w, `{"id":1, "name":"test-2"}`)
@@ -157,7 +157,7 @@ func TestGroupDelete(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/groups/test",
+	mux.HandleFunc(serverPattern("groups/test"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "DELETE")
 		},

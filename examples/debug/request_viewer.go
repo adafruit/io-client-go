@@ -10,10 +10,10 @@ safe to use a bogus secret key.
 
 For example:
 
-    $ go run examples/debug/request_viewer.go -key "12345ABC"
+    $ go run examples/debug/request_viewer.go -user "username" -key "12345ABC"
     2016/05/26 09:10:07 -- received request --
     ---
-    POST /api/v1/feeds/beta-test/data HTTP/1.1
+    POST /api/v2/username/feeds/beta-test/data HTTP/1.1
     Host: 127.0.0.1:53626
     Accept: application/json
     Accept-Encoding: gzip
@@ -33,16 +33,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
-	"net/url"
 	"os"
 
-	"github.com/adafruit/io-client-go"
+	adafruitio "github.com/adafruit/io-client-go/v2"
 )
 
 // Add the API call you want to examine here to see it output at the command line.
 func CallAPI(client *adafruitio.Client) {
 	client.SetFeed(&adafruitio.Feed{Key: "beta-test"})
-	client.Data.Send(&adafruitio.Data{Value: "22"})
+	client.Data.Create(&adafruitio.Data{Value: "22"})
 }
 
 func main() {
@@ -61,16 +60,24 @@ func main() {
 	defer ts.Close()
 
 	var key string
+	var username string
 	flag.StringVar(&key, "key", "", "your Adafruit IO key")
+	flag.StringVar(&username, "user", "", "your Adafruit IO user name")
 	flag.Parse()
 
 	if key == "" {
 		key = os.Getenv("ADAFRUIT_IO_KEY")
 	}
 
-	client := adafruitio.NewClient(key)
+	if username == "" {
+		username = os.Getenv("ADAFRUIT_IO_USERNAME")
+	}
 
-	client.BaseURL, _ = url.Parse(ts.URL)
+	client := adafruitio.NewClient(username, key)
+
+	if ts.URL != "" {
+		client.SetBaseURL(ts.URL)
+	}
 
 	CallAPI(client)
 }

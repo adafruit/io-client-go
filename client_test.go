@@ -5,11 +5,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+const testUser = "test_username"
 
 var (
 	// mux is the HTTP request multiplexer used with the test server.
@@ -31,14 +32,17 @@ func setup() {
 	server = httptest.NewServer(mux)
 
 	// github client configured to use test server
-	client = NewClient("test-key")
-	url, _ := url.Parse(server.URL)
-	client.BaseURL = url
+	client = NewClient(testUser, "test-key")
+	client.SetBaseURL(server.URL)
 }
 
 // teardown closes the test HTTP server.
 func teardown() {
 	server.Close()
+}
+
+func serverPattern(pattern string) string {
+	return fmt.Sprintf("%s/%s/%s", APIPath, testUser, pattern)
 }
 
 func testMethod(t *testing.T, r *http.Request, want string) {
@@ -80,8 +84,11 @@ func testBody(t *testing.T, r *http.Request, want string) {
 func TestClientInitiation(t *testing.T) {
 	assert := assert.New(t)
 
-	c := NewClient("GIVEN KEY")
-	assert.Equal("GIVEN KEY", c.APIKey, "expected to find GIVEN KEY")
+	c := NewClient("GIVEN USER", "GIVEN KEY")
+	u, k := c.GetUserKey()
+
+	assert.Equal("GIVEN USER", u, "expected to find GIVEN USER")
+	assert.Equal("GIVEN KEY", k, "expected to find GIVEN KEY")
 }
 
 func TestClientAuthentication(t *testing.T) {

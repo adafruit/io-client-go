@@ -12,7 +12,7 @@ func TestFeedAll(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/feeds",
+	mux.HandleFunc(serverPattern("feeds"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			fmt.Fprint(w, `[{"id":1, "name":"feed"}]`)
@@ -37,7 +37,7 @@ func TestFeedGet(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/feeds/test",
+	mux.HandleFunc(serverPattern("feeds/test"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
 			fmt.Fprint(w, `{"id":1, "name":"test"}`)
@@ -60,7 +60,7 @@ func TestFeedCreate(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/feeds",
+	mux.HandleFunc(serverPattern("feeds"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "POST")
 			fmt.Fprint(w, `{"id":1, "name":"test"}`)
@@ -85,7 +85,7 @@ func TestFeedUpdate(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/feeds/test",
+	mux.HandleFunc(serverPattern("feeds/test"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "PATCH")
 			fmt.Fprint(w, `{"id":1, "name":"test-2"}`)
@@ -111,7 +111,7 @@ func TestFeedDelete(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc("/api/v1/feeds/test",
+	mux.HandleFunc(serverPattern("feeds/test"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "DELETE")
 		},

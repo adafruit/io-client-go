@@ -6,22 +6,23 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
-	"net/url"
 	"os"
 	"time"
 
-	aio "github.com/adafruit/io-client-go"
+	adafruitio "github.com/adafruit/io-client-go/v2"
 )
 
 var (
-	useURL string
-	key    string
+	useURL   string
+	username string
+	key      string
 )
 
 func prepare() {
 	rand.Seed(time.Now().UnixNano())
 
 	flag.StringVar(&useURL, "url", "", "Adafruit IO URL. Defaults to https://io.adafruit.com.")
+	flag.StringVar(&username, "user", "", "your Adafruit IO user name")
 	flag.StringVar(&key, "key", "", "your Adafruit IO key")
 
 	if useURL == "" {
@@ -33,10 +34,14 @@ func prepare() {
 		key = os.Getenv("ADAFRUIT_IO_KEY")
 	}
 
+	if username == "" {
+		username = os.Getenv("ADAFRUIT_IO_USERNAME")
+	}
+
 	flag.Parse()
 }
 
-func render(label string, f *aio.Group) {
+func render(label string, f *adafruitio.Group) {
 	sfeed, _ := json.MarshalIndent(f, "", "  ")
 	fmt.Printf("--- %v\n", label)
 	fmt.Println(string(sfeed))
@@ -46,7 +51,7 @@ func title(label string) {
 	fmt.Printf("\n\n%v\n\n", label)
 }
 
-func ShowAll(client *aio.Client) {
+func ShowAll(client *adafruitio.Client) {
 	title("All")
 	groups, _, err := client.Group.All()
 	if err != nil {
@@ -64,8 +69,10 @@ func pause() {
 func main() {
 	prepare()
 
-	client := aio.NewClient(key)
-	client.BaseURL, _ = url.Parse(useURL)
+	client := adafruitio.NewClient(username, key)
+	if useURL != "" {
+		client.SetBaseURL(useURL)
+	}
 
 	ShowAll(client)
 	pause()
@@ -73,7 +80,7 @@ func main() {
 	// CREATE
 	name := fmt.Sprintf("a_new_group_%d", rand.Int())
 	fmt.Printf("CREATING %v\n", name)
-	g, resp, err := client.Group.Create(&aio.Group{Name: name})
+	g, resp, err := client.Group.Create(&adafruitio.Group{Name: name})
 	if err != nil {
 		// resp.Debug()
 		fmt.Printf("failed to create group")
@@ -87,7 +94,7 @@ func main() {
 	pause()
 
 	// GET
-	newg, _, err := client.Group.Get(g.ID)
+	newg, _, err := client.Group.Get(g.Key)
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +106,7 @@ func main() {
 	g.Description = "Now this group has a description."
 
 	fmt.Printf("changing name to %v\n", g.Name)
-	newg, _, err = client.Group.Update(g.ID, g)
+	newg, _, err = client.Group.Update(g.Key, g)
 	if err != nil {
 		panic(err)
 	}
@@ -109,7 +116,7 @@ func main() {
 	// DELETE
 	time.Sleep(2 * time.Second)
 	title("deleting group")
-	_, err = client.Group.Delete(newg.ID)
+	_, err = client.Group.Delete(newg.Key)
 	if err == nil {
 		fmt.Println("ok")
 	}
