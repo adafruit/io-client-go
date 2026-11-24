@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -46,7 +45,7 @@ type Response struct {
 }
 
 func (r *Response) Debug() {
-	all, _ := ioutil.ReadAll(r.Body)
+	all, _ := io.ReadAll(r.Body)
 	fmt.Println("---")
 	fmt.Println(string(all))
 	fmt.Println("---")
@@ -124,7 +123,7 @@ func CheckResponse(r *http.Response) error {
 	errorResponse := &ErrorResponse{Response: r}
 
 	// read response body into Error.Message
-	body, _ := ioutil.ReadAll(r.Body)
+	body, _ := io.ReadAll(r.Body)
 
 	// try to unmarshal error response Body into AIOError record
 	jerr := json.Unmarshal(body, &errorResponse.AIOError)
@@ -198,7 +197,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 
 	defer func() {
 		// Drain up to 512 bytes and close the body to let the Transport reuse the connection
-		io.CopyN(ioutil.Discard, resp.Body, 512)
+		io.CopyN(io.Discard, resp.Body, 512)
 		resp.Body.Close()
 	}()
 
