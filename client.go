@@ -14,6 +14,8 @@ import (
 	"net/url"
 	"reflect"
 	"runtime"
+	"strconv"
+	"strings"
 
 	"github.com/google/go-querystring/query"
 )
@@ -46,6 +48,85 @@ type Client struct {
 // Response wraps http.Response and adds fields unique to Adafruit's API.
 type Response struct {
 	*http.Response
+
+	// Total is the total number of records matching a paginated request,
+	// across all pages, from the X-Pagination-Total header. The API notes it
+	// may be up to 5 minutes behind. It is 0 for requests that aren't
+	// paginated.
+	Total int
+
+	// NextBefore is the cursor for the next page of a paginated request, such
+	// as DataService.All. Set it as the Before field of the next request's
+	// DataFilter. It is empty when there are no more pages.
+	NextBefore string
+}
+
+// newResponse wraps resp and populates the pagination fields from its headers.
+func newResponse(resp *http.Response) *Response {
+	response := &Response{Response: resp}
+	response.Total, _ = strconv.Atoi(resp.Header.Get("X-Pagination-Total"))
+	if next := nextLink(resp.Header.Get("Link")); next != "" {
+		if u, err := url.Parse(next); err == nil {
+			response.NextBefore = u.Query().Get("before")
+		}
+	}
+	return response
+}
+
+// nextLink returns the URL of the next page from a Link header, or "" if
+// there isn't one.
+//
+// Adafruit IO's Link header doesn't follow the usual format. It looks like
+//
+//	<current page URL>;rel="next", <next page URL>
+//
+// where rel="next" marks the URL that follows it, rather than the one before
+// it. On the last page, only the current page URL is present. To stay
+// compatible if the API adopts the standard format, where the URL before
+// rel="next" is the next page, that URL is used when nothing follows it.
+func nextLink(header string) string {
+	links := parseLinks(header)
+	for i, link := range links {
+		if !strings.Contains(link.params, `rel="next"`) {
+			continue
+		}
+		if i+1 < len(links) && !strings.Contains(links[i+1].params, "rel=") {
+			return links[i+1].url
+		}
+		return link.url
+	}
+	return ""
+}
+
+// link is one entry of a Link header: a URL and the parameters after it.
+type link struct {
+	url    string
+	params string
+}
+
+// parseLinks splits a Link header into its entries. It finds each URL by its
+// angle brackets rather than splitting on commas, because URLs may contain
+// commas, for example in an include=value,created_at query parameter.
+func parseLinks(header string) []link {
+	var links []link
+	for {
+		start := strings.Index(header, "<")
+		if start < 0 {
+			return links
+		}
+		end := strings.Index(header[start:], ">")
+		if end < 0 {
+			return links
+		}
+		end += start
+
+		params := header[end+1:]
+		if next := strings.Index(params, "<"); next >= 0 {
+			params = params[:next]
+		}
+		links = append(links, link{url: header[start+1 : end], params: params})
+		header = header[end+1:]
+	}
 }
 
 func (r *Response) Debug() {
@@ -219,9 +300,7 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*Res
 		resp.Body.Close()
 	}()
 
-	response := &Response{
-		Response: resp,
-	}
+	response := newResponse(resp)
 
 	err = CheckResponse(resp)
 	if err != nil {

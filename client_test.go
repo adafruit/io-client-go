@@ -225,3 +225,61 @@ func TestDoNilContext(t *testing.T) {
 	assert.Equal(t, errNilContext, err)
 	assert.Nil(t, response)
 }
+
+func TestNextLink(t *testing.T) {
+	const self = "https://io.adafruit.com/api/v2/u/feeds/f/data?end_time=2026-11-24+17%3A51%3A16+UTC&limit=2"
+	const next = "https://io.adafruit.com/api/v2/u/feeds/f/data?before=abc&end_time=2026-11-24+17%3A51%3A16+UTC&limit=2"
+
+	tests := []struct {
+		name   string
+		header string
+		want   string
+	}{
+		{"Adafruit IO middle page", "<" + self + `>;rel="next", <` + next + ">", next},
+		{"Adafruit IO last page", "<" + self + ">;", ""},
+		{"URL with a comma", "<" + self + `&include=value,created_at>;rel="next", <` + next + "&include=value,created_at>", next + "&include=value,created_at"},
+		{"empty", "", ""},
+		{"standard, next only", "<" + next + `>; rel="next"`, next},
+		{"standard, with prev and last", "<" + self + `>; rel="prev", <` + next + `>; rel="next", <` + self + `>; rel="last"`, next},
+	}
+
+	for _, tt := range tests {
+		assert.Equal(t, tt.want, nextLink(tt.header), tt.name)
+	}
+}
+
+func TestResponsePagination(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data"),
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-Pagination-Total", "5")
+			w.Header().Set("Link", `<http://example.com/data?limit=2>;rel="next", <http://example.com/data?before=abc%3D%3D&limit=2>`)
+			fmt.Fprint(w, `[{"id":"5"},{"id":"4"}]`)
+		},
+	)
+
+	_, response, err := client.Data.All(context.Background(), "temperature", nil)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 5, response.Total)
+	assert.Equal(t, "abc==", response.NextBefore)
+}
+
+func TestResponseNotPaginated(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature"),
+		func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprint(w, `{"key":"temperature"}`)
+		},
+	)
+
+	_, response, err := client.Feed.Get(context.Background(), "temperature")
+
+	assert.Nil(t, err)
+	assert.Equal(t, 0, response.Total)
+	assert.Equal(t, "", response.NextBefore)
+}

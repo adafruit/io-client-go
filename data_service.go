@@ -26,11 +26,30 @@ type Data struct {
 
 // DataFilter filters the Data returned by DataService.All and Search. Zero
 // values are left out of the request.
+//
+// Results are sorted newest first and paginated. To get every page, set
+// Before to the NextBefore of the previous page's Response until it is empty.
 type DataFilter struct {
-	// StartTime returns only Data created after this time.
+	// StartTime returns only Data created after this time. If StartTime is
+	// set without EndTime, the API returns the oldest records after
+	// StartTime, so set EndTime too when paging through a time range.
 	StartTime time.Time `url:"start_time,omitempty"`
+
 	// EndTime returns only Data created before this time.
 	EndTime time.Time `url:"end_time,omitempty"`
+
+	// Limit is the number of records per page. The API's default is 100 and
+	// its maximum is 1000.
+	Limit int `url:"limit,omitempty"`
+
+	// Include lists the Data fields to return, for example
+	// []string{"value", "created_at"}. Fields that aren't included are nil.
+	// The API accepts value, lat, lon, ele, id, and created_at.
+	Include []string `url:"include,omitempty,comma"`
+
+	// Before is the cursor for the page to get. Set it to the NextBefore of
+	// the previous page's Response.
+	Before string `url:"before,omitempty"`
 }
 
 type DataService struct {
@@ -166,6 +185,32 @@ func (s *DataService) First(ctx context.Context, feedKey string) (*Data, *Respon
 // Last returns the last Data in the Feed identified by feedKey.
 func (s *DataService) Last(ctx context.Context, feedKey string) (*Data, *Response, error) {
 	return s.retrieve(ctx, feedKey, "last")
+}
+
+// CreateBatch adds several Data values to the Feed identified by feedKey in a
+// single request, and returns the created records.
+func (s *DataService) CreateBatch(ctx context.Context, feedKey string, data []*Data) ([]*Data, *Response, error) {
+	path, perr := dataPath(feedKey, "batch")
+	if perr != nil {
+		return nil, nil, perr
+	}
+
+	body := struct {
+		Data []*Data `json:"data"`
+	}{data}
+
+	req, rerr := s.client.NewRequest("POST", path, body)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	created := make([]*Data, 0)
+	resp, err := s.client.Do(ctx, req, &created)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return created, resp, nil
 }
 
 // Create adds a new Data value to the Feed identified by feedKey, and returns

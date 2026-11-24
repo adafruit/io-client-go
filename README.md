@@ -115,6 +115,51 @@ if err != nil {
 fmt.Println(len(values), "values")
 ```
 
+To send several values in one request, use `CreateBatch`:
+
+```go
+created, _, err := client.Data.CreateBatch(ctx, "temperature", []*adafruitio.Data{
+	{Value: adafruitio.Ptr("22.5")},
+	{Value: adafruitio.Ptr("22.7")},
+})
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println("created", len(created), "values")
+```
+
+#### Pagination
+
+`Data.All` returns one page of values at a time, newest first: 100 by default,
+and up to 1000 with `Limit`. To get every page, pass the `NextBefore` cursor
+from each page's response as the `Before` of the next request, until it is
+empty. `Total` is the number of matching values across all pages.
+
+```go
+filter := &adafruitio.DataFilter{
+	Limit:   1000,
+	EndTime: time.Now(),
+	Include: []string{"value", "created_at"}, // only return these fields
+}
+for {
+	page, resp, err := client.Data.All(ctx, "temperature", filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, data := range page {
+		fmt.Println(data.GetCreatedAt().Format(time.RFC3339), data.GetValue())
+	}
+	if resp.NextBefore == "" {
+		break // no more pages
+	}
+	filter.Before = resp.NextBefore
+}
+```
+
+If you set `StartTime`, also set `EndTime`. With only a `StartTime`, the API
+returns the oldest values after it rather than the newest. Requesting many
+pages quickly can hit the API's rate limit, which returns a `429` status.
+
 ### Groups
 
 ```go

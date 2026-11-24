@@ -12,6 +12,8 @@ API v2 Endpoints
   - [x] Read
   - [x] Update
   - [x] Delete
+  - [x] Create Batch
+  - [x] Pagination
   - [x] Helper Methods
     - [x] First
     - [x] Next

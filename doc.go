@@ -31,6 +31,23 @@ API. Data methods take the key of the feed they read from or write to:
 
 	last, _, err := client.Data.Last(ctx, "temperature")
 
+DataService.All returns one page of values at a time, newest first. To get
+every page, set the DataFilter's Before to the NextBefore of each page's
+Response, until it is empty:
+
+	filter := &adafruitio.DataFilter{Limit: 1000, EndTime: time.Now()}
+	for {
+		page, resp, err := client.Data.All(ctx, "temperature", filter)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(len(page), "values")
+		if resp.NextBefore == "" {
+			break
+		}
+		filter.Before = resp.NextBefore
+	}
+
 # Pointer fields
 
 As in go-github, every field of Feed, Group, and Data is a pointer. A nil
