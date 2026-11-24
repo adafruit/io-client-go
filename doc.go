@@ -75,7 +75,14 @@ The StartTime and EndTime of a DataFilter are plain time.Time values.
 # Errors
 
 When the API returns an error status, methods return an *ErrorResponse
-containing the API's error message, along with the *Response.
+containing the API's error message, along with the *Response. When a rate
+limit is exceeded, they return a *RateLimitError, which wraps the
+*ErrorResponse:
+
+	var rateErr *adafruitio.RateLimitError
+	if errors.As(err, &rateErr) {
+		time.Sleep(time.Minute) // the API doesn't say when to retry
+	}
 
 The Adafruit IO HTTP API documentation is at
 https://io.adafruit.com/api/docs/http.html.

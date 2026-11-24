@@ -85,7 +85,6 @@ func main() {
 	fmt.Printf("CREATING %v\n", name)
 	g, resp, err := client.Group.Create(ctx, &adafruitio.Group{Name: adafruitio.Ptr(name)})
 	if err != nil {
-		// resp.Debug()
 		fmt.Printf("failed to create group")
 		panic(err)
 	} else if resp.StatusCode > 299 {

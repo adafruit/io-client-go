@@ -2,8 +2,6 @@ package adafruitio
 
 import (
 	"context"
-	"errors"
-	"path"
 	"time"
 )
 
@@ -56,21 +54,10 @@ type DataService struct {
 	client *Client
 }
 
-var errEmptyFeedKey = errors.New("feed key must not be empty")
-
-// dataPath builds the path for a feed's data endpoints, e.g.
-// dataPath("temperature", "last") returns "feeds/temperature/data/last".
-func dataPath(feedKey, suffix string) (string, error) {
-	if feedKey == "" {
-		return "", errEmptyFeedKey
-	}
-	return path.Join("feeds", feedKey, "data", suffix), nil
-}
-
 // All returns Data for the Feed identified by feedKey, optionally filtered by
 // opt. opt may be nil.
 func (s *DataService) All(ctx context.Context, feedKey string, opt *DataFilter) ([]*Data, *Response, error) {
-	path, perr := dataPath(feedKey, "")
+	path, perr := dataPath(feedKey)
 	if perr != nil {
 		return nil, nil, perr
 	}
@@ -103,13 +90,17 @@ func (s *DataService) Search(ctx context.Context, feedKey string, filter *DataFi
 // Get returns the Data record identified by id from the Feed identified by
 // feedKey.
 func (s *DataService) Get(ctx context.Context, feedKey, id string) (*Data, *Response, error) {
-	return s.retrieve(ctx, feedKey, id)
+	path, perr := dataRecordPath(feedKey, id)
+	if perr != nil {
+		return nil, nil, perr
+	}
+	return s.getRecord(ctx, path)
 }
 
 // Update updates the Data record identified by id in the Feed identified by
 // feedKey, and returns the updated record.
 func (s *DataService) Update(ctx context.Context, feedKey, id string, data *Data) (*Data, *Response, error) {
-	path, perr := dataPath(feedKey, id)
+	path, perr := dataRecordPath(feedKey, id)
 	if perr != nil {
 		return nil, nil, perr
 	}
@@ -131,7 +122,7 @@ func (s *DataService) Update(ctx context.Context, feedKey, id string, data *Data
 // Delete deletes the Data record identified by id from the Feed identified by
 // feedKey.
 func (s *DataService) Delete(ctx context.Context, feedKey, id string) (*Response, error) {
-	path, perr := dataPath(feedKey, id)
+	path, perr := dataRecordPath(feedKey, id)
 	if perr != nil {
 		return nil, perr
 	}
@@ -144,15 +135,19 @@ func (s *DataService) Delete(ctx context.Context, feedKey, id string) (*Response
 	return s.client.Do(ctx, req, nil)
 }
 
-// retrieve GETs a single Data record at feeds/{feedKey}/data/{suffix}, where
-// suffix is a record ID or one of the next, previous, first, and last
-// commands.
-func (s *DataService) retrieve(ctx context.Context, feedKey, suffix string) (*Data, *Response, error) {
-	path, perr := dataPath(feedKey, suffix)
+// retrieve GETs a single Data record from the data of the Feed identified by
+// feedKey, at the path given by segments, such as one of the next, previous,
+// first, and last commands.
+func (s *DataService) retrieve(ctx context.Context, feedKey string, segments ...string) (*Data, *Response, error) {
+	path, perr := dataPath(feedKey, segments...)
 	if perr != nil {
 		return nil, nil, perr
 	}
+	return s.getRecord(ctx, path)
+}
 
+// getRecord GETs the single Data record at path.
+func (s *DataService) getRecord(ctx context.Context, path string) (*Data, *Response, error) {
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
 		return nil, nil, rerr
@@ -216,7 +211,7 @@ func (s *DataService) CreateBatch(ctx context.Context, feedKey string, data []*D
 // Create adds a new Data value to the Feed identified by feedKey, and returns
 // the created record.
 func (s *DataService) Create(ctx context.Context, feedKey string, dp *Data) (*Data, *Response, error) {
-	path, perr := dataPath(feedKey, "")
+	path, perr := dataPath(feedKey)
 	if perr != nil {
 		return nil, nil, perr
 	}
@@ -239,7 +234,11 @@ func (s *DataService) Create(ctx context.Context, feedKey string, dp *Data) (*Da
 // Unlike Last, it works with read-only access, so it can be used on public
 // feeds. If the feed has no data, the API returns a 404 error.
 func (s *DataService) LastValue(ctx context.Context, feedKey string) (*Data, *Response, error) {
-	return s.retrieve(ctx, feedKey, "last_value?type=json")
+	path, perr := dataPath(feedKey, "last_value")
+	if perr != nil {
+		return nil, nil, perr
+	}
+	return s.getRecord(ctx, path+"?type=json")
 }
 
 // ChartFilter sets the time range and aggregation for DataService.Chart.

@@ -2,10 +2,7 @@
 
 package adafruitio
 
-import (
-	"context"
-	"fmt"
-)
+import "context"
 
 // Group is an Adafruit IO group of feeds. See Feed for how pointer fields
 // work.
@@ -64,9 +61,12 @@ func (s *GroupService) Create(ctx context.Context, g *Group) (*Group, *Response,
 	return &group, resp, nil
 }
 
-// Get returns the Group record identified by the given ID
+// Get returns the Group identified by key.
 func (s *GroupService) Get(ctx context.Context, key string) (*Group, *Response, error) {
-	path := fmt.Sprintf("groups/%s", key)
+	path, perr := groupPath(key)
+	if perr != nil {
+		return nil, nil, perr
+	}
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -85,7 +85,10 @@ func (s *GroupService) Get(ctx context.Context, key string) (*Group, *Response, 
 // Update takes an ID and a Group record, updates it, and returns a new Group
 // instance or an error.
 func (s *GroupService) Update(ctx context.Context, key string, group *Group) (*Group, *Response, error) {
-	path := fmt.Sprintf("groups/%s", key)
+	path, perr := groupPath(key)
+	if perr != nil {
+		return nil, nil, perr
+	}
 
 	req, rerr := s.client.NewRequest("PATCH", path, group)
 	if rerr != nil {
@@ -103,7 +106,10 @@ func (s *GroupService) Update(ctx context.Context, key string, group *Group) (*G
 
 // Delete the Group identified by the given ID.
 func (s *GroupService) Delete(ctx context.Context, key string) (*Response, error) {
-	path := fmt.Sprintf("groups/%s", key)
+	path, perr := groupPath(key)
+	if perr != nil {
+		return nil, perr
+	}
 
 	req, rerr := s.client.NewRequest("DELETE", path, nil)
 	if rerr != nil {
@@ -117,7 +123,10 @@ func (s *GroupService) Delete(ctx context.Context, key string) (*Response, error
 // other than the default group, feed keys are scoped to the group, for
 // example "mygroup.temperature".
 func (s *GroupService) Feeds(ctx context.Context, key string) ([]*Feed, *Response, error) {
-	path := fmt.Sprintf("groups/%s/feeds", key)
+	path, perr := groupPath(key, "feeds")
+	if perr != nil {
+		return nil, nil, perr
+	}
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -136,7 +145,10 @@ func (s *GroupService) Feeds(ctx context.Context, key string) ([]*Feed, *Respons
 // CreateFeed creates a Feed in the Group identified by key, and returns the
 // created Feed.
 func (s *GroupService) CreateFeed(ctx context.Context, key string, feed *Feed) (*Feed, *Response, error) {
-	path := fmt.Sprintf("groups/%s/feeds", key)
+	path, perr := groupPath(key, "feeds")
+	if perr != nil {
+		return nil, nil, perr
+	}
 
 	req, rerr := s.client.NewRequest("POST", path, feed)
 	if rerr != nil {
@@ -166,7 +178,13 @@ func (s *GroupService) RemoveFeed(ctx context.Context, key, feedKey string) (*Gr
 
 // changeFeed handles the add and remove actions for AddFeed and RemoveFeed.
 func (s *GroupService) changeFeed(ctx context.Context, key, action, feedKey string) (*Group, *Response, error) {
-	path := fmt.Sprintf("groups/%s/%s", key, action)
+	path, perr := groupPath(key, action)
+	if perr != nil {
+		return nil, nil, perr
+	}
+	if feedKey == "" {
+		return nil, nil, errEmptyFeedKey
+	}
 	body := struct {
 		FeedKey string `json:"feed_key"`
 	}{feedKey}
@@ -190,7 +208,11 @@ func (s *GroupService) changeFeed(ctx context.Context, key, action, feedKey stri
 // group, feed keys are scoped to the group, for example
 // "mygroup.temperature". A feed with no data has a nil value.
 func (s *GroupService) LastValues(ctx context.Context, key string) (map[string]*string, *Response, error) {
-	path := fmt.Sprintf("groups/%s/data/last_value?type=json", key)
+	path, perr := groupPath(key, "data", "last_value")
+	if perr != nil {
+		return nil, nil, perr
+	}
+	path += "?type=json"
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {

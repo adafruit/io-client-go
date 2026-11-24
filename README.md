@@ -320,6 +320,32 @@ if errors.As(err, &apiErr) {
 }
 ```
 
+Some errors, such as a failed validation, have several messages. `Message`
+joins them, and `AIOError.Messages` lists them separately.
+
+When you exceed a [rate limit](https://io.adafruit.com/api/docs/http.html#rate-limiting),
+such as the number of data points you can send per minute, methods return an
+`*adafruitio.RateLimitError`. The API doesn't say when to retry, so wait a
+minute:
+
+```go
+_, _, err := client.Data.Create(ctx, "temperature", &adafruitio.Data{
+	Value: adafruitio.Ptr("22.5"),
+})
+
+var rateErr *adafruitio.RateLimitError
+if errors.As(err, &rateErr) {
+	fmt.Println("rate limited:", rateErr.Message)
+	time.Sleep(time.Minute)
+}
+```
+
+A `RateLimitError` is also an `ErrorResponse`, so code that checks for
+`ErrorResponse` handles rate limits too.
+
+Methods return an error without making a request if a feed key, group key, or
+record ID is empty.
+
 ### More examples
 
 The [examples](./examples) directory has complete programs for feeds, groups,
@@ -350,7 +376,17 @@ v3 changes the API in several ways:
   the response alongside an error, and the client no longer prints to stdout
   when the API returns an error. Reading data that has a location (`lat`,
   `lon`, `ele`) no longer fails, since the API returns those as strings from
-  most endpoints.
+  most endpoints. Errors with several messages are decoded properly, rather
+  than reported as raw JSON.
+- **Errors:** rate limit (`429`) responses return a `*RateLimitError`, which
+  wraps the `*ErrorResponse`. `AIOError.Messages` lists every message in an
+  error.
+- **Keys in URLs:** feed keys, group keys, and record IDs are escaped, so a key
+  containing characters such as `/` or `?` can't change which endpoint is
+  called, and an empty key returns an error without making a request.
+- **Removed `Response.Debug`:** it couldn't work, because the response body
+  has already been read. To see raw requests and responses, use
+  `WithHTTPClient` with a logging `http.RoundTripper`.
 
 ## Development
 

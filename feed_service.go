@@ -1,9 +1,6 @@
 package adafruitio
 
-import (
-	"context"
-	"fmt"
-)
+import "context"
 
 type FeedService struct {
 	client *Client
@@ -71,10 +68,14 @@ func (s *FeedService) All(ctx context.Context) ([]*Feed, *Response, error) {
 	return feeds, resp, nil
 }
 
-// Get returns the Feed record identified by the given parameter. Parameter can
-// be the Feed's Name, Key, or ID.
+// Get returns the Feed identified by key, which can be the feed's key or its
+// ID. Feeds in a group other than the default group can also be reached by
+// their group-scoped key, such as "mygroup.temperature".
 func (s *FeedService) Get(ctx context.Context, key string) (*Feed, *Response, error) {
-	path := fmt.Sprintf("feeds/%s", key)
+	path, perr := feedPath(key)
+	if perr != nil {
+		return nil, nil, perr
+	}
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
 	if rerr != nil {
@@ -112,7 +113,10 @@ func (s *FeedService) Create(ctx context.Context, feed *Feed) (*Feed, *Response,
 //
 // Only the Feed Name and Description can be modified.
 func (s *FeedService) Update(ctx context.Context, key string, feed *Feed) (*Feed, *Response, error) {
-	path := fmt.Sprintf("feeds/%s", key)
+	path, perr := feedPath(key)
+	if perr != nil {
+		return nil, nil, perr
+	}
 
 	req, rerr := s.client.NewRequest("PATCH", path, feed)
 	if rerr != nil {
@@ -130,7 +134,10 @@ func (s *FeedService) Update(ctx context.Context, key string, feed *Feed) (*Feed
 
 // Delete the Feed identified by the given ID.
 func (s *FeedService) Delete(ctx context.Context, key string) (*Response, error) {
-	path := fmt.Sprintf("feeds/%s", key)
+	path, perr := feedPath(key)
+	if perr != nil {
+		return nil, perr
+	}
 
 	req, rerr := s.client.NewRequest("DELETE", path, nil)
 	if rerr != nil {

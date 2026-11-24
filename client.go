@@ -130,21 +130,57 @@ func parseLinks(header string) []link {
 	}
 }
 
-func (r *Response) Debug() {
-	all, _ := io.ReadAll(r.Body)
-	fmt.Println("---")
-	fmt.Println(string(all))
-	fmt.Println("---")
-}
-
+// AIOError is the body of an API error response.
 type AIOError struct {
-	Message string `json:"error"`
+	// Messages are the error messages. Most errors have one, but validation
+	// errors, such as creating a feed without a name, may have several.
+	Messages []string
+
+	// Message is Messages joined with "; ".
+	Message string
 }
 
-// ErrorResponse reports one or more errors caused by an API request.
+// UnmarshalJSON implements the json.Unmarshaler interface. The API returns
+// the error as either a string or an array of strings:
+//
+//	{"error": "request failed - cannot process request"}
+//	{"error": ["Name can't be blank", "Key can't be blank"], "status": "bad_request"}
+func (e *AIOError) UnmarshalJSON(b []byte) error {
+	var body struct {
+		Error json.RawMessage `json:"error"`
+	}
+	if err := json.Unmarshal(b, &body); err != nil {
+		return err
+	}
+
+	var one string
+	var many []string
+	switch {
+	case len(body.Error) == 0 || string(body.Error) == "null":
+		e.Messages = nil
+	case json.Unmarshal(body.Error, &one) == nil:
+		e.Messages = []string{one}
+	case json.Unmarshal(body.Error, &many) == nil:
+		e.Messages = many
+	default:
+		return fmt.Errorf("unexpected error field: %s", body.Error)
+	}
+
+	e.Message = strings.Join(e.Messages, "; ")
+	return nil
+}
+
+// ErrorResponse reports an error returned by the API: any response with a
+// status code outside the 200 range.
 type ErrorResponse struct {
 	Response *http.Response // HTTP response that carried the error message
-	Message  string
+
+	// Message is the API's error message, or the response body if it
+	// doesn't contain one.
+	Message string
+
+	// AIOError is the decoded error body, or nil if the body isn't a JSON
+	// error.
 	AIOError *AIOError
 }
 
@@ -156,6 +192,22 @@ func (r *ErrorResponse) Error() string {
 		r.Response.StatusCode,
 		r.Message,
 	)
+}
+
+// RateLimitError is returned when the API responds with 429 Too Many
+// Requests: either the account's data rate limit (data points created,
+// updated, or deleted per minute) or the overall limit on HTTP requests per
+// minute was exceeded. The API doesn't say when to retry; its documentation
+// suggests waiting a minute.
+//
+// RateLimitError wraps an *ErrorResponse, so errors.As finds either type.
+type RateLimitError struct {
+	*ErrorResponse
+}
+
+// Unwrap returns the underlying *ErrorResponse.
+func (r *RateLimitError) Unwrap() error {
+	return r.ErrorResponse
 }
 
 // ClientOption configures a Client. Pass options to NewClient.
@@ -221,11 +273,19 @@ func CheckResponse(r *http.Response) error {
 	jerr := json.Unmarshal(body, &errorResponse.AIOError)
 	if jerr != nil || errorResponse.AIOError == nil {
 		// body was not a JSON error object, use body as Message
+		errorResponse.AIOError = nil
+		errorResponse.Message = string(body)
+	} else if errorResponse.AIOError.Message == "" {
+		// JSON without an error message, use body as Message
+		errorResponse.AIOError = nil
 		errorResponse.Message = string(body)
 	} else {
 		errorResponse.Message = errorResponse.AIOError.Message
 	}
 
+	if r.StatusCode == http.StatusTooManyRequests {
+		return &RateLimitError{ErrorResponse: errorResponse}
+	}
 	return errorResponse
 }
 
