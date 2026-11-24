@@ -81,8 +81,8 @@ func main() {
 			for _, feed := range feeds {
 				fmt.Fprintf(w,
 					`<li><a href='/feed/%v'>%v</a></li>`,
-					feed.Key,
-					feed.Name,
+					feed.GetKey(),
+					feed.GetName(),
 				)
 			}
 			fmt.Fprint(w, "</ul>")
@@ -116,7 +116,7 @@ func main() {
 			}
 
 			// get all Data for the given Feed
-			data, _, err := client.Data.All(r.Context(), feed.Key, nil)
+			data, _, err := client.Data.All(r.Context(), feed.GetKey(), nil)
 			if err != nil {
 				fmt.Fprintf(w, "ERROR loading data. %v", err.Error())
 				return
@@ -130,8 +130,8 @@ func main() {
 						<td>%v</td>
 						<td>%v</td>
 					</tr>`,
-					d.CreatedAt,
-					d.Value,
+					d.GetCreatedAt(),
+					d.GetValue(),
 				)
 			}
 			fmt.Fprint(w, "</table>")

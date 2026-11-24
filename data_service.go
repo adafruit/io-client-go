@@ -6,21 +6,21 @@ import (
 	"path"
 )
 
-// Data are the values contained by a Feed.
+// Data is a single value in a Feed. See Feed for how pointer fields work.
 type Data struct {
-	ID           string  `json:"id,omitempty"`
-	Value        string  `json:"value,omitempty"`
-	FeedID       int     `json:"feed_id,omitempty"`
-	FeedKey      string  `json:"feed_key,omitempty"`
-	GroupID      int     `json:"group_id,omitempty"`
-	Expiration   string  `json:"expiration,omitempty"`
-	Latitude     float64 `json:"lat,omitempty"`
-	Longitude    float64 `json:"lon,omitempty"`
-	Elevation    float64 `json:"ele,omitempty"`
-	CompletedAt  string  `json:"completed_at,omitempty"`
-	CreatedAt    string  `json:"created_at,omitempty"`
-	UpdatedAt    string  `json:"updated_at,omitempty"`
-	CreatedEpoch float64 `json:"created_epoch,omitempty"`
+	ID           *string  `json:"id,omitempty"`
+	Value        *string  `json:"value,omitempty"`
+	FeedID       *int64   `json:"feed_id,omitempty"`
+	FeedKey      *string  `json:"feed_key,omitempty"`
+	GroupID      *int64   `json:"group_id,omitempty"`
+	Expiration   *string  `json:"expiration,omitempty"`
+	Latitude     *float64 `json:"lat,omitempty"`
+	Longitude    *float64 `json:"lon,omitempty"`
+	Elevation    *float64 `json:"ele,omitempty"`
+	CompletedAt  *string  `json:"completed_at,omitempty"`
+	CreatedAt    *string  `json:"created_at,omitempty"`
+	UpdatedAt    *string  `json:"updated_at,omitempty"`
+	CreatedEpoch *float64 `json:"created_epoch,omitempty"`
 }
 
 type DataFilter struct {

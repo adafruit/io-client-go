@@ -55,7 +55,7 @@ func TestDataCreate(t *testing.T) {
 	val := "67.112"
 
 	dp := &Data{
-		Value: val,
+		Value: Ptr(val),
 	}
 	datapoint, response, err := client.Data.Create(context.Background(), "temperature", dp)
 
@@ -63,8 +63,8 @@ func TestDataCreate(t *testing.T) {
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal("1", datapoint.ID)
-	assert.Equal(val, datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal(val, datapoint.GetValue())
 }
 
 func TestDataGet(t *testing.T) {
@@ -87,8 +87,8 @@ func TestDataGet(t *testing.T) {
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("67.112", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("67.112", datapoint.GetValue())
 }
 
 func TestAllDataNoFilter(t *testing.T) {
@@ -113,8 +113,8 @@ func TestAllDataNoFilter(t *testing.T) {
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("67.112", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("67.112", datapoint.GetValue())
 }
 
 func TestAllDataFilter(t *testing.T) {
@@ -144,8 +144,8 @@ func TestAllDataFilter(t *testing.T) {
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("67.112", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("67.112", datapoint.GetValue())
 }
 
 func TestSearchDataFilter(t *testing.T) {
@@ -171,8 +171,8 @@ func TestSearchDataFilter(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(response)
 	if assert.Len(datapoints, 1) {
-		assert.Equal("1", datapoints[0].ID)
-		assert.Equal("67.112", datapoints[0].Value)
+		assert.Equal("1", datapoints[0].GetID())
+		assert.Equal("67.112", datapoints[0].GetValue())
 	}
 }
 
@@ -238,26 +238,26 @@ func TestDataQueue(t *testing.T) {
 	datapoint, response, err = client.Data.Next(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("1", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("1", datapoint.GetValue())
 
 	datapoint, response, err = client.Data.Prev(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
-	assert.Equal("2", datapoint.ID)
-	assert.Equal("2", datapoint.Value)
+	assert.Equal("2", datapoint.GetID())
+	assert.Equal("2", datapoint.GetValue())
 
 	datapoint, response, err = client.Data.Last(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
-	assert.Equal("3", datapoint.ID)
-	assert.Equal("3", datapoint.Value)
+	assert.Equal("3", datapoint.GetID())
+	assert.Equal("3", datapoint.GetValue())
 
 	datapoint, response, err = client.Data.First(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("1", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("1", datapoint.GetValue())
 
 }
 

@@ -33,7 +33,7 @@ func Example() {
 	// View the resulting feed list
 	for _, feed := range feeds {
 		jsonBytes, _ := json.MarshalIndent(feed, "", "  ")
-		fmt.Printf("[%v]\n", feed.Name)
+		fmt.Printf("[%v]\n", feed.GetName())
 		fmt.Println(string(jsonBytes))
 	}
 }

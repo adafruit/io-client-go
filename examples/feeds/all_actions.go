@@ -58,7 +58,7 @@ func ShowAll(ctx context.Context, client *adafruitio.Client) {
 	}
 
 	for _, feed := range feeds {
-		render(feed.Name, feed)
+		render(feed.GetName(), feed)
 	}
 }
 
@@ -79,12 +79,12 @@ func main() {
 
 	title("Create")
 
-	newFeed := &adafruitio.Feed{Name: "my-new-feed", Description: "an example of creating feeds"}
+	newFeed := &adafruitio.Feed{Name: adafruitio.Ptr("my-new-feed"), Description: adafruitio.Ptr("an example of creating feeds")}
 	client.Feed.Create(ctx, newFeed)
 	render("NEW FEED", newFeed)
 	time.Sleep(1 * time.Second)
 
-	if newFeed.ID == 0 {
+	if newFeed.GetID() == 0 {
 		panic(fmt.Errorf("could not create feed"))
 	}
 
@@ -95,7 +95,7 @@ func main() {
 
 	title("Update")
 
-	updatedFeed, _, _ := client.Feed.Update(ctx, newFeed.Key, &adafruitio.Feed{Name: "renamed-new-feed"})
+	updatedFeed, _, _ := client.Feed.Update(ctx, newFeed.GetKey(), &adafruitio.Feed{Name: adafruitio.Ptr("renamed-new-feed")})
 	render("UPDATED FEED", updatedFeed)
 	time.Sleep(1 * time.Second)
 
@@ -106,13 +106,13 @@ func main() {
 
 	title("Just the new one")
 
-	feed, _, _ := client.Feed.Get(ctx, updatedFeed.Key)
+	feed, _, _ := client.Feed.Get(ctx, updatedFeed.GetKey())
 	render("SHOW", feed)
 	time.Sleep(1 * time.Second)
 
 	title("Delete")
 
-	_, err := client.Feed.Delete(ctx, newFeed.Key)
+	_, err := client.Feed.Delete(ctx, newFeed.GetKey())
 	if err == nil {
 		fmt.Println("ok")
 	}

@@ -17,9 +17,9 @@ API v2 Endpoints
     - [x] Next
     - [x] Last
     - [x] Previous
-- [] Groups
+- [x] Groups
   - [x] Index
   - [x] Create
-  - [X] Read
-  - [X] Update
-  - [X] Delete
+  - [x] Read
+  - [x] Update
+  - [x] Delete

@@ -80,18 +80,18 @@ func main() {
 	}
 
 	// create a data point on an existing Feed
-	val := &adafruitio.Data{Value: value, FeedKey: feedName}
+	val := &adafruitio.Data{Value: adafruitio.Ptr(value), FeedKey: adafruitio.Ptr(feedName)}
 
 	title("Create and Check")
 
-	dp, _, err := client.Data.Create(ctx, feed.Key, val)
+	dp, _, err := client.Data.Create(ctx, feed.GetKey(), val)
 	if err != nil {
 		fmt.Println("unable to create data")
 		panic(err)
 	}
 	render("new point", dp)
 
-	ndp, _, err := client.Data.Get(ctx, feed.Key, dp.ID)
+	ndp, _, err := client.Data.Get(ctx, feed.GetKey(), dp.GetID())
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -99,10 +99,10 @@ func main() {
 	render("found point", ndp)
 
 	// update point
-	client.Data.Update(ctx, feed.Key, dp.ID, &adafruitio.Data{Value: rval()})
+	client.Data.Update(ctx, feed.GetKey(), dp.GetID(), &adafruitio.Data{Value: adafruitio.Ptr(rval())})
 
 	// reload
-	ndp, _, err = client.Data.Get(ctx, feed.Key, dp.ID)
+	ndp, _, err = client.Data.Get(ctx, feed.GetKey(), dp.GetID())
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -112,46 +112,46 @@ func main() {
 
 	// Generate some more Data to fill out the stream
 	for i := 0; i < 4; i += 1 {
-		client.Data.Create(ctx, feed.Key, &adafruitio.Data{Value: rval()})
+		client.Data.Create(ctx, feed.GetKey(), &adafruitio.Data{Value: adafruitio.Ptr(rval())})
 	}
 
 	// Display all Data in the stream
 	title("All Data")
-	dts, _, err := client.Data.All(ctx, feed.Key, nil)
+	dts, _, err := client.Data.All(ctx, feed.GetKey(), nil)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
 	}
 	for _, data := range dts {
-		render(fmt.Sprintf("ID <%v>", data.ID), data)
+		render(fmt.Sprintf("ID <%v>", data.GetID()), data)
 	}
 	time.Sleep(2 * time.Second)
 
 	// stream commands: Last, Prev, and Next
 	title("Queue related commands")
 
-	ndp, _, err = client.Data.Last(ctx, feed.Key)
+	ndp, _, err = client.Data.Last(ctx, feed.GetKey())
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
 	}
 	render("last point", ndp)
 
-	ndp, _, err = client.Data.Prev(ctx, feed.Key)
+	ndp, _, err = client.Data.Prev(ctx, feed.GetKey())
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
 	}
 	render("prev point", ndp)
 
-	ndp, _, err = client.Data.First(ctx, feed.Key)
+	ndp, _, err = client.Data.First(ctx, feed.GetKey())
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
 	}
 	render("first point", ndp)
 
-	ndp, _, err = client.Data.Next(ctx, feed.Key)
+	ndp, _, err = client.Data.Next(ctx, feed.GetKey())
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -160,7 +160,7 @@ func main() {
 
 	// delete
 	title("Delete")
-	_, derr := client.Data.Delete(ctx, feed.Key, ndp.ID)
+	_, derr := client.Data.Delete(ctx, feed.GetKey(), ndp.GetID())
 	if derr == nil {
 		fmt.Println("ok")
 	} else {
@@ -169,28 +169,28 @@ func main() {
 	time.Sleep(1 * time.Second)
 
 	title("All Data (updated)")
-	dts, _, err = client.Data.All(ctx, feed.Key, nil)
+	dts, _, err = client.Data.All(ctx, feed.GetKey(), nil)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
 	}
 	for _, data := range dts {
-		render(fmt.Sprintf("ID <%v>", data.ID), data)
+		render(fmt.Sprintf("ID <%v>", data.GetID()), data)
 	}
 	time.Sleep(2 * time.Second)
 
 	// Now, generate a single point and do a filtered search for it
 	t := time.Now().Unix() // get current time
 	time.Sleep(2 * time.Second)
-	client.Data.Create(ctx, feed.Key, &adafruitio.Data{Value: rval()}) // create point 2 seconds later
+	client.Data.Create(ctx, feed.GetKey(), &adafruitio.Data{Value: adafruitio.Ptr(rval())}) // create point 2 seconds later
 
 	title(fmt.Sprintf("Filtered Data, since %v", t))
-	dts, _, err = client.Data.All(ctx, feed.Key, &adafruitio.DataFilter{StartTime: fmt.Sprintf("%d", t)})
+	dts, _, err = client.Data.All(ctx, feed.GetKey(), &adafruitio.DataFilter{StartTime: fmt.Sprintf("%d", t)})
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
 	}
 	for _, data := range dts {
-		render(fmt.Sprintf("ID <%v>", data.ID), data)
+		render(fmt.Sprintf("ID <%v>", data.GetID()), data)
 	}
 }

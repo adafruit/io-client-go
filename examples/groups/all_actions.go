@@ -59,7 +59,7 @@ func ShowAll(ctx context.Context, client *adafruitio.Client) {
 		panic(err)
 	}
 	for _, g := range groups {
-		render(g.Name, g)
+		render(g.GetName(), g)
 	}
 }
 
@@ -83,7 +83,7 @@ func main() {
 	// CREATE
 	name := fmt.Sprintf("a_new_group_%d", rand.Int())
 	fmt.Printf("CREATING %v\n", name)
-	g, resp, err := client.Group.Create(ctx, &adafruitio.Group{Name: name})
+	g, resp, err := client.Group.Create(ctx, &adafruitio.Group{Name: adafruitio.Ptr(name)})
 	if err != nil {
 		// resp.Debug()
 		fmt.Printf("failed to create group")
@@ -97,7 +97,7 @@ func main() {
 	pause()
 
 	// GET
-	newg, _, err := client.Group.Get(ctx, g.Key)
+	newg, _, err := client.Group.Get(ctx, g.GetKey())
 	if err != nil {
 		panic(err)
 	}
@@ -105,11 +105,11 @@ func main() {
 	pause()
 
 	// UPDATE (only Name and Description can be modified)
-	g.Name = fmt.Sprintf("name_changed_to_%d", rand.Int())
-	g.Description = "Now this group has a description."
+	g.Name = adafruitio.Ptr(fmt.Sprintf("name_changed_to_%d", rand.Int()))
+	g.Description = adafruitio.Ptr("Now this group has a description.")
 
-	fmt.Printf("changing name to %v\n", g.Name)
-	newg, _, err = client.Group.Update(ctx, g.Key, g)
+	fmt.Printf("changing name to %v\n", g.GetName())
+	newg, _, err = client.Group.Update(ctx, g.GetKey(), g)
 	if err != nil {
 		panic(err)
 	}
@@ -119,7 +119,7 @@ func main() {
 	// DELETE
 	time.Sleep(2 * time.Second)
 	title("deleting group")
-	_, err = client.Group.Delete(ctx, newg.Key)
+	_, err = client.Group.Delete(ctx, newg.GetKey())
 	if err == nil {
 		fmt.Println("ok")
 	}

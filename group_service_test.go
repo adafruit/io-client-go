@@ -77,8 +77,8 @@ func TestGroupAll(t *testing.T) {
 
 	group := groups[0]
 
-	assert.Equal(1, group.ID)
-	assert.Equal("group", group.Name)
+	assert.Equal(int64(1), group.GetID())
+	assert.Equal("group", group.GetName())
 }
 
 func TestGroupGet(t *testing.T) {
@@ -100,8 +100,8 @@ func TestGroupGet(t *testing.T) {
 	assert.NotNil(group)
 	assert.NotNil(response)
 
-	assert.Equal(1, group.ID)
-	assert.Equal("test", group.Name)
+	assert.Equal(int64(1), group.GetID())
+	assert.Equal("test", group.GetName())
 }
 
 func TestGroupCreate(t *testing.T) {
@@ -117,7 +117,7 @@ func TestGroupCreate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	ngroup := &Group{Name: "test"}
+	ngroup := &Group{Name: Ptr("test")}
 
 	group, response, err := client.Group.Create(context.Background(), ngroup)
 
@@ -125,8 +125,8 @@ func TestGroupCreate(t *testing.T) {
 	assert.NotNil(group)
 	assert.NotNil(response)
 
-	assert.Equal(1, group.ID)
-	assert.Equal("test", group.Name)
+	assert.Equal(int64(1), group.GetID())
+	assert.Equal("test", group.GetName())
 }
 
 func TestGroupUpdate(t *testing.T) {
@@ -142,7 +142,7 @@ func TestGroupUpdate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	group := &Group{ID: 1, Name: "test"}
+	group := &Group{ID: Ptr(int64(1)), Name: Ptr("test")}
 
 	ugroup, response, err := client.Group.Update(context.Background(), "test", group)
 
@@ -150,8 +150,8 @@ func TestGroupUpdate(t *testing.T) {
 	assert.NotNil(ugroup)
 	assert.NotNil(response)
 
-	assert.Equal(1, ugroup.ID)
-	assert.Equal("test-2", ugroup.Name)
+	assert.Equal(int64(1), ugroup.GetID())
+	assert.Equal("test-2", ugroup.GetName())
 	assert.NotEqual(&group, &ugroup)
 }
 
@@ -188,7 +188,7 @@ func TestGroupCreateOmitsEmptyVisibility(t *testing.T) {
 		},
 	)
 
-	_, _, err := client.Group.Create(context.Background(), &Group{Name: "test"})
+	_, _, err := client.Group.Create(context.Background(), &Group{Name: Ptr("test")})
 
 	assert.Nil(t, err)
 }

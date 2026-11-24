@@ -2,35 +2,55 @@
 // This code is under the MIT License that can be found in the LICENSE file.
 
 /*
-The adafruitio package is a simple HTTP client for accessing v1 of the Adafruit IO REST API at https://io.adafruit.com.
+Package adafruitio is a client for the Adafruit IO HTTP API (v2) at
+https://io.adafruit.com.
 
-	import "github.com/adafruit/io-client-go/v3"
+	import adafruitio "github.com/adafruit/io-client-go/v3"
 
-Authentication for Adafruit IO is managed by providing your Adafruit IO token
-in the head of all web requests via the `X-AIO-Key` header. This is handled for
-you by the client library, which expects you API Token when it is initialized.
+Create a client with your Adafruit IO username and key. The key is sent in
+the X-AIO-Key header of every request. We recommend keeping it in an
+environment variable rather than in your code:
 
-We recommend keeping the Token in an environment variable to avoid including it
-directly in your code.
+	client := adafruitio.NewClient(os.Getenv("ADAFRUIT_IO_USERNAME"), os.Getenv("ADAFRUIT_IO_KEY"))
 
-	client := adafruitio.NewClient(os.Getenv("ADAFRUIT_IO_KEY"))
-	feeds, _, err := adafruitio.Feed.All()
+To set timeouts or other transport settings, pass your own http.Client with
+WithHTTPClient.
 
-Some API calls expect parameters, which must be provided when making the call.
+Every API method takes a context.Context as its first argument:
 
-	feed := &aio.Feed{Name: "my-new-feed"}
-	client.Feed.Create(newFeed)
+	feeds, _, err := client.Feed.All(ctx)
 
-Data related API calls expect a Feed to be set before the call is made.
+# Feeds, Data, and Groups
 
-**NOTE:** the Feed doesn't have to exist yet if you're using the `Data.Send()`
-method, but it still needs to be set. If you're relying on the Data API to
-create the Feed, make sure you set the `Key` attribute on the new Feed.
+The client's Feed, Data, and Group services cover the matching parts of the
+API. Data methods take the key of the feed they read from or write to:
 
-	feed := &aio.Feed{Name: "My New Feed", Key: "my-new-feed"}
-	client.SetFeed(newFeed)
-	client.Data.Send(&adafruitio.Data{Value: 100})
+	_, _, err := client.Data.Create(ctx, "temperature", &adafruitio.Data{
+		Value: adafruitio.Ptr("22.5"),
+	})
 
-You can see the v1 Adafruit IO REST API documentation online at https://io.adafruit.com/api/docs/
+	last, _, err := client.Data.Last(ctx, "temperature")
+
+# Pointer fields
+
+As in go-github, every field of Feed, Group, and Data is a pointer. A nil
+field is left out of create and update requests, so the server keeps its
+current value, while a non-nil field is always sent, even if it is "", 0, or
+false. Set fields with Ptr, and read them with the generated Get methods,
+which return the zero value for nil fields:
+
+	feed, _, err := client.Feed.Update(ctx, "temperature", &adafruitio.Feed{
+		Description: adafruitio.Ptr(""),    // clear the description
+		History:     adafruitio.Ptr(false), // turn off history
+	})
+	fmt.Println(feed.GetName())
+
+# Errors
+
+When the API returns an error status, methods return an *ErrorResponse
+containing the API's error message, along with the *Response.
+
+The Adafruit IO HTTP API documentation is at
+https://io.adafruit.com/api/docs/http.html.
 */
 package adafruitio

@@ -7,18 +7,20 @@ import (
 	"fmt"
 )
 
+// Group is an Adafruit IO group of feeds. See Feed for how pointer fields
+// work.
 type Group struct {
-	ID          int     `json:"id,omitempty"`
-	Name        string  `json:"name,omitempty"`
-	Key         string  `json:"key,omitempty"`
+	ID          *int64  `json:"id,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Key         *string `json:"key,omitempty"`
 	Owner       *Owner  `json:"owner,omitempty"`
-	UserID      int     `json:"user_id,omitempty"`
-	Description string  `json:"description,omitempty"`
-	CreatedAt   string  `json:"created_at,omitempty"`
-	UpdatedAt   string  `json:"updated_at,omitempty"`
+	UserID      *int64  `json:"user_id,omitempty"`
+	Description *string `json:"description,omitempty"`
+	CreatedAt   *string `json:"created_at,omitempty"`
+	UpdatedAt   *string `json:"updated_at,omitempty"`
 	Feeds       []*Feed `json:"feeds,omitempty"`
-	Visibility  string  `json:"visibility,omitempty"`
-	Shared      bool    `json:"is_shared,omitempty"`
+	Visibility  *string `json:"visibility,omitempty"`
+	Shared      *bool   `json:"is_shared,omitempty"`
 }
 
 type GroupService struct {
