@@ -4,7 +4,7 @@
 /*
 The adafruitio package is a simple HTTP client for accessing v1 of the Adafruit IO REST API at https://io.adafruit.com.
 
-	import "github.com/adafruit/io-client-go"
+	import "github.com/adafruit/io-client-go/v3"
 
 Authentication for Adafruit IO is managed by providing your Adafruit IO token
 in the head of all web requests via the `X-AIO-Key` header. This is handled for

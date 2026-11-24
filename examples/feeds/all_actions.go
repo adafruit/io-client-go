@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	adafruitio "github.com/adafruit/io-client-go/v2"
+	adafruitio "github.com/adafruit/io-client-go/v3"
 )
 
 var (

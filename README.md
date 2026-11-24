@@ -15,12 +15,12 @@ $ go test ./...
 
 First, add the package:
 ```bash
-$ go get github.com/adafruit/io-client-go/v2
+$ go get github.com/adafruit/io-client-go/v3
 ```
 
 Then import it:
 ```go
-import "github.com/adafruit/io-client-go/v2"
+import "github.com/adafruit/io-client-go/v3"
 ```
 
 The io-client-go repository provides the `adafruitio` package.

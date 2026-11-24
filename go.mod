@@ -1,4 +1,4 @@
-module github.com/adafruit/io-client-go/v2
+module github.com/adafruit/io-client-go/v3
 
 go 1.18
 
