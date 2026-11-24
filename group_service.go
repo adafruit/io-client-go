@@ -112,3 +112,101 @@ func (s *GroupService) Delete(ctx context.Context, key string) (*Response, error
 
 	return s.client.Do(ctx, req, nil)
 }
+
+// Feeds returns the Feeds in the Group identified by key. Within a group
+// other than the default group, feed keys are scoped to the group, for
+// example "mygroup.temperature".
+func (s *GroupService) Feeds(ctx context.Context, key string) ([]*Feed, *Response, error) {
+	path := fmt.Sprintf("groups/%s/feeds", key)
+
+	req, rerr := s.client.NewRequest("GET", path, nil)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	feeds := make([]*Feed, 0)
+	resp, err := s.client.Do(ctx, req, &feeds)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return feeds, resp, nil
+}
+
+// CreateFeed creates a Feed in the Group identified by key, and returns the
+// created Feed.
+func (s *GroupService) CreateFeed(ctx context.Context, key string, feed *Feed) (*Feed, *Response, error) {
+	path := fmt.Sprintf("groups/%s/feeds", key)
+
+	req, rerr := s.client.NewRequest("POST", path, feed)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var created Feed
+	resp, err := s.client.Do(ctx, req, &created)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return &created, resp, nil
+}
+
+// AddFeed adds the Feed identified by feedKey to the Group identified by key,
+// and returns the updated Group. The feed stays in its other groups.
+func (s *GroupService) AddFeed(ctx context.Context, key, feedKey string) (*Group, *Response, error) {
+	return s.changeFeed(ctx, key, "add", feedKey)
+}
+
+// RemoveFeed removes the Feed identified by feedKey from the Group identified
+// by key, and returns the updated Group. The feed itself is not deleted.
+func (s *GroupService) RemoveFeed(ctx context.Context, key, feedKey string) (*Group, *Response, error) {
+	return s.changeFeed(ctx, key, "remove", feedKey)
+}
+
+// changeFeed handles the add and remove actions for AddFeed and RemoveFeed.
+func (s *GroupService) changeFeed(ctx context.Context, key, action, feedKey string) (*Group, *Response, error) {
+	path := fmt.Sprintf("groups/%s/%s", key, action)
+	body := struct {
+		FeedKey string `json:"feed_key"`
+	}{feedKey}
+
+	req, rerr := s.client.NewRequest("POST", path, body)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var group Group
+	resp, err := s.client.Do(ctx, req, &group)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return &group, resp, nil
+}
+
+// LastValues returns the most recent value of every Feed in the Group
+// identified by key, keyed by feed key. Within a group other than the default
+// group, feed keys are scoped to the group, for example
+// "mygroup.temperature". A feed with no data has a nil value.
+func (s *GroupService) LastValues(ctx context.Context, key string) (map[string]*string, *Response, error) {
+	path := fmt.Sprintf("groups/%s/data/last_value?type=json", key)
+
+	req, rerr := s.client.NewRequest("GET", path, nil)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var values struct {
+		Feeds map[string]*string `json:"feeds"`
+	}
+	resp, err := s.client.Do(ctx, req, &values)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	if values.Feeds == nil {
+		values.Feeds = map[string]*string{}
+	}
+	return values.Feeds, resp, nil
+}

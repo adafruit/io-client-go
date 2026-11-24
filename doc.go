@@ -20,10 +20,11 @@ Every API method takes a context.Context as its first argument:
 
 	feeds, _, err := client.Feed.All(ctx)
 
-# Feeds, Data, and Groups
+# Services
 
 The client's Feed, Data, and Group services cover the matching parts of the
-API. Data methods take the key of the feed they read from or write to:
+API, and its User service returns your account details and rate limits. Data
+methods take the key of the feed they read from or write to:
 
 	_, _, err := client.Data.Create(ctx, "temperature", &adafruitio.Data{
 		Value: adafruitio.Ptr("22.5"),

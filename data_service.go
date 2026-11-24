@@ -234,3 +234,93 @@ func (s *DataService) Create(ctx context.Context, feedKey string, dp *Data) (*Da
 
 	return point, resp, nil
 }
+
+// LastValue returns the most recent Data in the Feed identified by feedKey.
+// Unlike Last, it works with read-only access, so it can be used on public
+// feeds. If the feed has no data, the API returns a 404 error.
+func (s *DataService) LastValue(ctx context.Context, feedKey string) (*Data, *Response, error) {
+	return s.retrieve(ctx, feedKey, "last_value?type=json")
+}
+
+// ChartFilter sets the time range and aggregation for DataService.Chart.
+// Zero values are left out of the request.
+type ChartFilter struct {
+	// StartTime and EndTime set the time range of the chart. If both are
+	// set, Hours is ignored.
+	StartTime time.Time `url:"start_time,omitempty"`
+	EndTime   time.Time `url:"end_time,omitempty"`
+
+	// Hours sets the time range to the given number of hours before now.
+	Hours int `url:"hours,omitempty"`
+
+	// Resolution is the size of each aggregation slice in minutes: 1, 5, 10,
+	// 30, 60, 120, 240, 480, or 960. If it is 0, the API picks one based on
+	// the time range.
+	Resolution int `url:"resolution,omitempty"`
+
+	// Field is the aggregate to return for each slice: avg, sum, val, min,
+	// max, or val_count. The API's default is avg.
+	Field string `url:"field,omitempty"`
+
+	// Raw returns the raw data points instead of aggregates. It can't be
+	// used with Resolution or Field.
+	Raw bool `url:"raw,omitempty"`
+}
+
+// Chart is chart data for a Feed, as returned by DataService.Chart.
+type Chart struct {
+	// Feed identifies the charted feed by ID, Key, and Name.
+	Feed *Feed `json:"feed,omitempty"`
+
+	// Parameters are the parameters the API used to build the chart,
+	// including any it picked itself, such as Resolution.
+	Parameters *ChartParameters `json:"parameters,omitempty"`
+
+	// Columns names the values in each row of Data, for example
+	// ["date", "value"].
+	Columns []string `json:"columns,omitempty"`
+
+	// Data has one row per point, with values in the order of Columns. Dates
+	// are RFC 3339 strings.
+	Data [][]string `json:"data,omitempty"`
+
+	// Storage reports whether the chart was built from raw ("raw") or
+	// aggregated ("agg") data.
+	Storage *string `json:"storage,omitempty"`
+}
+
+// ChartParameters are the parameters used to build a Chart.
+type ChartParameters struct {
+	StartTime  *Timestamp `json:"start_time,omitempty"`
+	EndTime    *Timestamp `json:"end_time,omitempty"`
+	Hours      *int       `json:"hours,omitempty"`
+	Resolution *int       `json:"resolution,omitempty"`
+	Field      *string    `json:"field,omitempty"`
+}
+
+// Chart returns chart data for the Feed identified by feedKey: the feed's
+// values over a time range, aggregated into time slices. opt may be nil.
+func (s *DataService) Chart(ctx context.Context, feedKey string, opt *ChartFilter) (*Chart, *Response, error) {
+	path, perr := dataPath(feedKey, "chart")
+	if perr != nil {
+		return nil, nil, perr
+	}
+
+	path, oerr := addOptions(path, opt)
+	if oerr != nil {
+		return nil, nil, oerr
+	}
+
+	req, rerr := s.client.NewRequest("GET", path, nil)
+	if rerr != nil {
+		return nil, nil, rerr
+	}
+
+	var chart Chart
+	resp, err := s.client.Do(ctx, req, &chart)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return &chart, resp, nil
+}

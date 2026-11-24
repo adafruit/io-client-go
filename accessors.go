@@ -3,6 +3,70 @@
 
 package adafruitio
 
+// GetFeed returns the Feed field.
+func (c *Chart) GetFeed() *Feed {
+	if c == nil {
+		return nil
+	}
+	return c.Feed
+}
+
+// GetParameters returns the Parameters field.
+func (c *Chart) GetParameters() *ChartParameters {
+	if c == nil {
+		return nil
+	}
+	return c.Parameters
+}
+
+// GetStorage returns the Storage field if it's non-nil, zero value otherwise.
+func (c *Chart) GetStorage() string {
+	if c == nil || c.Storage == nil {
+		return ""
+	}
+	return *c.Storage
+}
+
+// GetEndTime returns the EndTime field if it's non-nil, zero value otherwise.
+func (c *ChartParameters) GetEndTime() Timestamp {
+	if c == nil || c.EndTime == nil {
+		return Timestamp{}
+	}
+	return *c.EndTime
+}
+
+// GetField returns the Field field if it's non-nil, zero value otherwise.
+func (c *ChartParameters) GetField() string {
+	if c == nil || c.Field == nil {
+		return ""
+	}
+	return *c.Field
+}
+
+// GetHours returns the Hours field if it's non-nil, zero value otherwise.
+func (c *ChartParameters) GetHours() int {
+	if c == nil || c.Hours == nil {
+		return 0
+	}
+	return *c.Hours
+}
+
+// GetResolution returns the Resolution field if it's non-nil, zero value otherwise.
+func (c *ChartParameters) GetResolution() int {
+	if c == nil || c.Resolution == nil {
+		return 0
+	}
+	return *c.Resolution
+}
+
+// GetStartTime returns the StartTime field if it's non-nil, zero value otherwise.
+func (c *ChartParameters) GetStartTime() Timestamp {
+	if c == nil || c.StartTime == nil {
+		return Timestamp{}
+	}
+	return *c.StartTime
+}
+
 // GetCompletedAt returns the CompletedAt field if it's non-nil, zero value otherwise.
 func (d *Data) GetCompletedAt() Timestamp {
 	if d == nil || d.CompletedAt == nil {
@@ -361,4 +425,148 @@ func (o *Owner) GetUsername() string {
 		return ""
 	}
 	return *o.Username
+}
+
+// GetActiveDataRate returns the ActiveDataRate field if it's non-nil, zero value otherwise.
+func (t *Throttle) GetActiveDataRate() int {
+	if t == nil || t.ActiveDataRate == nil {
+		return 0
+	}
+	return *t.ActiveDataRate
+}
+
+// GetActiveSMSRate returns the ActiveSMSRate field if it's non-nil, zero value otherwise.
+func (t *Throttle) GetActiveSMSRate() int {
+	if t == nil || t.ActiveSMSRate == nil {
+		return 0
+	}
+	return *t.ActiveSMSRate
+}
+
+// GetAuthenticationRate returns the AuthenticationRate field if it's non-nil, zero value otherwise.
+func (t *Throttle) GetAuthenticationRate() int {
+	if t == nil || t.AuthenticationRate == nil {
+		return 0
+	}
+	return *t.AuthenticationRate
+}
+
+// GetDataRateLimit returns the DataRateLimit field if it's non-nil, zero value otherwise.
+func (t *Throttle) GetDataRateLimit() int {
+	if t == nil || t.DataRateLimit == nil {
+		return 0
+	}
+	return *t.DataRateLimit
+}
+
+// GetHourlyBanRate returns the HourlyBanRate field if it's non-nil, zero value otherwise.
+func (t *Throttle) GetHourlyBanRate() int {
+	if t == nil || t.HourlyBanRate == nil {
+		return 0
+	}
+	return *t.HourlyBanRate
+}
+
+// GetMQTTBanErrorMessage returns the MQTTBanErrorMessage field if it's non-nil, zero value otherwise.
+func (t *Throttle) GetMQTTBanErrorMessage() string {
+	if t == nil || t.MQTTBanErrorMessage == nil {
+		return ""
+	}
+	return *t.MQTTBanErrorMessage
+}
+
+// GetPublishAuthorizationRate returns the PublishAuthorizationRate field if it's non-nil, zero value otherwise.
+func (t *Throttle) GetPublishAuthorizationRate() int {
+	if t == nil || t.PublishAuthorizationRate == nil {
+		return 0
+	}
+	return *t.PublishAuthorizationRate
+}
+
+// GetSubscribeAuthorizationRate returns the SubscribeAuthorizationRate field if it's non-nil, zero value otherwise.
+func (t *Throttle) GetSubscribeAuthorizationRate() int {
+	if t == nil || t.SubscribeAuthorizationRate == nil {
+		return 0
+	}
+	return *t.SubscribeAuthorizationRate
+}
+
+// GetColor returns the Color field if it's non-nil, zero value otherwise.
+func (u *User) GetColor() string {
+	if u == nil || u.Color == nil {
+		return ""
+	}
+	return *u.Color
+}
+
+// GetCreatedAt returns the CreatedAt field if it's non-nil, zero value otherwise.
+func (u *User) GetCreatedAt() Timestamp {
+	if u == nil || u.CreatedAt == nil {
+		return Timestamp{}
+	}
+	return *u.CreatedAt
+}
+
+// GetDefaultDashboardID returns the DefaultDashboardID field if it's non-nil, zero value otherwise.
+func (u *User) GetDefaultDashboardID() int64 {
+	if u == nil || u.DefaultDashboardID == nil {
+		return 0
+	}
+	return *u.DefaultDashboardID
+}
+
+// GetDefaultGroupID returns the DefaultGroupID field if it's non-nil, zero value otherwise.
+func (u *User) GetDefaultGroupID() int64 {
+	if u == nil || u.DefaultGroupID == nil {
+		return 0
+	}
+	return *u.DefaultGroupID
+}
+
+// GetID returns the ID field if it's non-nil, zero value otherwise.
+func (u *User) GetID() int64 {
+	if u == nil || u.ID == nil {
+		return 0
+	}
+	return *u.ID
+}
+
+// GetName returns the Name field if it's non-nil, zero value otherwise.
+func (u *User) GetName() string {
+	if u == nil || u.Name == nil {
+		return ""
+	}
+	return *u.Name
+}
+
+// GetRole returns the Role field if it's non-nil, zero value otherwise.
+func (u *User) GetRole() string {
+	if u == nil || u.Role == nil {
+		return ""
+	}
+	return *u.Role
+}
+
+// GetTimeZone returns the TimeZone field if it's non-nil, zero value otherwise.
+func (u *User) GetTimeZone() string {
+	if u == nil || u.TimeZone == nil {
+		return ""
+	}
+	return *u.TimeZone
+}
+
+// GetUpdatedAt returns the UpdatedAt field if it's non-nil, zero value otherwise.
+func (u *User) GetUpdatedAt() Timestamp {
+	if u == nil || u.UpdatedAt == nil {
+		return Timestamp{}
+	}
+	return *u.UpdatedAt
+}
+
+// GetUsername returns the Username field if it's non-nil, zero value otherwise.
+func (u *User) GetUsername() string {
+	if u == nil || u.Username == nil {
+		return ""
+	}
+	return *u.Username
 }

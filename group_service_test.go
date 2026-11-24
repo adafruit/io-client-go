@@ -213,3 +213,85 @@ func TestGroupDeleteError(t *testing.T) {
 		assert.Equal(404, response.StatusCode)
 	}
 }
+
+func TestGroupFeeds(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("groups/weather/feeds"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			fmt.Fprint(w, `[{"id": 1, "key": "weather.temperature"}, {"id": 2, "key": "weather.humidity"}]`)
+		},
+	)
+
+	feeds, _, err := client.Group.Feeds(context.Background(), "weather")
+
+	assert.Nil(t, err)
+	if assert.Len(t, feeds, 2) {
+		assert.Equal(t, "weather.temperature", feeds[0].GetKey())
+	}
+}
+
+func TestGroupCreateFeed(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("groups/weather/feeds"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "POST")
+			testBody(t, r, `{"name":"Temperature"}`+"\n")
+			fmt.Fprint(w, `{"id": 1, "name": "Temperature", "key": "weather.temperature"}`)
+		},
+	)
+
+	feed, _, err := client.Group.CreateFeed(context.Background(), "weather", &Feed{Name: Ptr("Temperature")})
+
+	assert.Nil(t, err)
+	assert.Equal(t, "weather.temperature", feed.GetKey())
+}
+
+func TestGroupAddAndRemoveFeed(t *testing.T) {
+	setup()
+	defer teardown()
+
+	for _, action := range []string{"add", "remove"} {
+		action := action
+		mux.HandleFunc(serverPattern("groups/weather/"+action),
+			func(w http.ResponseWriter, r *http.Request) {
+				testMethod(t, r, "POST")
+				testBody(t, r, `{"feed_key":"temperature"}`+"\n")
+				fmt.Fprintf(w, `{"id": 1, "key": "weather", "description": "%s"}`, action)
+			},
+		)
+	}
+
+	group, _, err := client.Group.AddFeed(context.Background(), "weather", "temperature")
+	assert.Nil(t, err)
+	assert.Equal(t, "add", group.GetDescription())
+
+	group, _, err = client.Group.RemoveFeed(context.Background(), "weather", "temperature")
+	assert.Nil(t, err)
+	assert.Equal(t, "remove", group.GetDescription())
+}
+
+func TestGroupLastValues(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("groups/weather/data/last_value"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			testQuery(t, r, "type", "json")
+			fmt.Fprint(w, `{"feeds": {"weather.temperature": "22.5", "weather.humidity": null}}`)
+		},
+	)
+
+	values, _, err := client.Group.LastValues(context.Background(), "weather")
+
+	assert.Nil(t, err)
+	assert.Equal(t, map[string]*string{
+		"weather.temperature": Ptr("22.5"),
+		"weather.humidity":    nil,
+	}, values)
+}

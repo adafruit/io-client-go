@@ -26,10 +26,14 @@ const outputFile = "accessors.go"
 
 // types lists the structs that get accessors.
 var types = map[string]bool{
-	"Data":  true,
-	"Feed":  true,
-	"Group": true,
-	"Owner": true,
+	"Chart":           true,
+	"ChartParameters": true,
+	"Data":            true,
+	"Feed":            true,
+	"Group":           true,
+	"Owner":           true,
+	"Throttle":        true,
+	"User":            true,
 }
 
 // zeroValues maps the types whose getters return a value (rather than a

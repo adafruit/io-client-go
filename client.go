@@ -43,6 +43,7 @@ type Client struct {
 	Data  *DataService
 	Feed  *FeedService
 	Group *GroupService
+	User  *UserService
 }
 
 // Response wraps http.Response and adds fields unique to Adafruit's API.
@@ -184,6 +185,7 @@ func NewClient(username, key string, opts ...ClientOption) *Client {
 	c.Data = &DataService{client: c}
 	c.Feed = &FeedService{client: c}
 	c.Group = &GroupService{client: c}
+	c.User = &UserService{client: c}
 
 	for _, opt := range opts {
 		opt(c)

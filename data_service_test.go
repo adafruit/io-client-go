@@ -33,6 +33,8 @@ func TestData_EmptyFeedKey(t *testing.T) {
 		"Prev":        func() error { _, _, err := client.Data.Prev(ctx, ""); return err },
 		"First":       func() error { _, _, err := client.Data.First(ctx, ""); return err },
 		"Last":        func() error { _, _, err := client.Data.Last(ctx, ""); return err },
+		"LastValue":   func() error { _, _, err := client.Data.LastValue(ctx, ""); return err },
+		"Chart":       func() error { _, _, err := client.Data.Chart(ctx, "", nil); return err },
 	}
 
 	for name, call := range calls {
@@ -383,4 +385,83 @@ func TestDataCreateBatch(t *testing.T) {
 		assert.Equal("a", created[0].GetID())
 		assert.Equal("2", created[1].GetValue())
 	}
+}
+
+func TestDataLastValue(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data/last_value"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			testQuery(t, r, "type", "json")
+			fmt.Fprint(w, `{"id": "1", "value": "22.5", "lat": "40.7", "lon": "-74.0", "ele": null}`)
+		},
+	)
+
+	data, _, err := client.Data.LastValue(context.Background(), "temperature")
+
+	assert.Nil(t, err)
+	assert.Equal(t, "22.5", data.GetValue())
+	assert.Equal(t, 40.7, data.GetLatitude())
+}
+
+func TestDataChart(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data/chart"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			testQuery(t, r, "hours", "24")
+			testQuery(t, r, "resolution", "60")
+			testQuery(t, r, "field", "max")
+			fmt.Fprint(w, `{
+				"feed": {"id": 30, "name": "Temperature", "key": "temperature"},
+				"parameters": {"start_time": "2026-11-23T18:13:56Z", "end_time": "2026-11-24T18:13:56Z", "resolution": 60, "hours": 24, "field": "max"},
+				"columns": ["date", "value"],
+				"storage": "agg",
+				"data": [["2026-11-24T17:00:00Z", "22.5"], ["2026-11-24T18:00:00Z", "23"]]
+			}`)
+		},
+	)
+
+	chart, _, err := client.Data.Chart(context.Background(), "temperature", &ChartFilter{
+		Hours:      24,
+		Resolution: 60,
+		Field:      "max",
+	})
+
+	assert := assert.New(t)
+	assert.Nil(err)
+	assert.Equal("temperature", chart.GetFeed().GetKey())
+	assert.Equal(60, chart.GetParameters().GetResolution())
+	assert.Equal("max", chart.GetParameters().GetField())
+	assert.Equal(2026, chart.GetParameters().GetStartTime().Year())
+	assert.Equal("agg", chart.GetStorage())
+	assert.Equal([]string{"date", "value"}, chart.Columns)
+	assert.Equal([][]string{{"2026-11-24T17:00:00Z", "22.5"}, {"2026-11-24T18:00:00Z", "23"}}, chart.Data)
+}
+
+func TestDataChartRaw(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data/chart"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testQuery(t, r, "raw", "true")
+			testQuery(t, r, "start_time", "2026-11-24T00:00:00Z")
+			if r.URL.Query().Has("hours") || r.URL.Query().Has("resolution") || r.URL.Query().Has("field") {
+				t.Errorf("unset filter fields were sent: %s", r.URL.RawQuery)
+			}
+			fmt.Fprint(w, `{"columns": ["date", "value"], "data": []}`)
+		},
+	)
+
+	_, _, err := client.Data.Chart(context.Background(), "temperature", &ChartFilter{
+		StartTime: time.Date(2026, 11, 24, 0, 0, 0, 0, time.UTC),
+		Raw:       true,
+	})
+
+	assert.Nil(t, err)
 }

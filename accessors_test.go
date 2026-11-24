@@ -14,10 +14,14 @@ import (
 // value when it is set.
 func TestAccessors(t *testing.T) {
 	for _, typ := range []reflect.Type{
+		reflect.TypeOf(&Chart{}),
+		reflect.TypeOf(&ChartParameters{}),
 		reflect.TypeOf(&Data{}),
 		reflect.TypeOf(&Feed{}),
 		reflect.TypeOf(&Group{}),
 		reflect.TypeOf(&Owner{}),
+		reflect.TypeOf(&Throttle{}),
+		reflect.TypeOf(&User{}),
 	} {
 		structType := typ.Elem()
 

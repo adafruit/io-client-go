@@ -160,6 +160,36 @@ If you set `StartTime`, also set `EndTime`. With only a `StartTime`, the API
 returns the oldest values after it rather than the newest. Requesting many
 pages quickly can hit the API's rate limit, which returns a `429` status.
 
+#### Latest values and charts
+
+`LastValue` returns a feed's most recent value. Unlike `Last`, it works with
+read-only access, so you can use it on other people's public feeds:
+
+```go
+latest, _, err := client.Data.LastValue(ctx, "temperature")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(latest.GetValue())
+```
+
+`Chart` returns a feed's values over a time range, aggregated into time
+slices, the way charts on io.adafruit.com show them:
+
+```go
+chart, _, err := client.Data.Chart(ctx, "temperature", &adafruitio.ChartFilter{
+	Hours:      24,    // the last 24 hours
+	Resolution: 60,    // in 60-minute slices
+	Field:      "max", // with the maximum value of each slice
+})
+if err != nil {
+	log.Fatal(err)
+}
+for _, row := range chart.Data { // each row is in the order of chart.Columns
+	fmt.Println(row[0], row[1])
+}
+```
+
 ### Groups
 
 ```go
@@ -170,6 +200,54 @@ if err != nil {
 for _, group := range groups {
 	fmt.Println(group.GetName(), len(group.Feeds), "feeds")
 }
+```
+
+Feeds can belong to several groups. Add feeds to a group, list them, and get
+the latest value of each, in one request:
+
+```go
+_, _, err := client.Group.AddFeed(ctx, "weather", "temperature")
+if err != nil {
+	log.Fatal(err)
+}
+
+feeds, _, err := client.Group.Feeds(ctx, "weather")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(len(feeds), "feeds in the group")
+
+values, _, err := client.Group.LastValues(ctx, "weather")
+if err != nil {
+	log.Fatal(err)
+}
+for feedKey, value := range values {
+	if value != nil { // nil if the feed has no data yet
+		fmt.Println(feedKey, *value)
+	}
+}
+```
+
+Within a group other than your default group, feed keys are scoped to the
+group, such as `weather.temperature`. `Group.CreateFeed` creates a feed directly
+in a group, and `Group.RemoveFeed` takes a feed out of a group without deleting
+it.
+
+### Your account
+
+```go
+user, _, err := client.User.Get(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println("signed in as", user.GetUsername())
+
+throttle, _, err := client.User.Throttle(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("sent %d of %d data points allowed per minute\n",
+	throttle.GetActiveDataRate(), throttle.GetDataRateLimit())
 ```
 
 ### Pointer fields
@@ -270,7 +348,9 @@ v3 changes the API in several ways:
   for feeds. `Feed.Writable`, `Feed.Group`, and `Feed.Groups` are new.
 - **Fixes:** `Data.Search` now applies its filter, `Delete` methods return
   the response alongside an error, and the client no longer prints to stdout
-  when the API returns an error.
+  when the API returns an error. Reading data that has a location (`lat`,
+  `lon`, `ele`) no longer fails, since the API returns those as strings from
+  most endpoints.
 
 ## Development
 
