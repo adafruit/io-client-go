@@ -290,3 +290,26 @@ func TestDataQueue(t *testing.T) {
 	assert.Equal("1", datapoint.Value)
 
 }
+
+func TestDataDeleteError(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/test/data/1"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "DELETE")
+			http.Error(w, `{"error":"not found"}`, http.StatusNotFound)
+		},
+	)
+
+	assert := assert.New(t)
+
+	client.SetFeed(&Feed{Key: "test"})
+
+	response, err := client.Data.Delete("1")
+
+	assert.NotNil(err)
+	if assert.NotNil(response) {
+		assert.Equal(404, response.StatusCode)
+	}
+}

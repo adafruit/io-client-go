@@ -126,3 +126,24 @@ func TestFeedDelete(t *testing.T) {
 
 	assert.Equal(200, response.StatusCode)
 }
+
+func TestFeedDeleteError(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/test"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "DELETE")
+			http.Error(w, `{"error":"not found"}`, http.StatusNotFound)
+		},
+	)
+
+	assert := assert.New(t)
+
+	response, err := client.Feed.Delete("test")
+
+	assert.NotNil(err)
+	if assert.NotNil(response) {
+		assert.Equal(404, response.StatusCode)
+	}
+}

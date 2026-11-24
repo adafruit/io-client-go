@@ -117,12 +117,7 @@ func (s *DataService) Delete(id string) (*Response, error) {
 		return nil, rerr
 	}
 
-	resp, err := s.client.Do(req, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return s.client.Do(req, nil)
 }
 
 // private method for handling the Next, Prev, and Last commands

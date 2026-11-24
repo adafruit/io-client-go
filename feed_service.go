@@ -133,10 +133,5 @@ func (s *FeedService) Delete(key string) (*Response, error) {
 		return nil, rerr
 	}
 
-	resp, err := s.client.Do(req, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return s.client.Do(req, nil)
 }

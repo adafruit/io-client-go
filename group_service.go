@@ -14,7 +14,7 @@ type Group struct {
 	CreatedAt   string  `json:"created_at,omitempty"`
 	UpdatedAt   string  `json:"updated_at,omitempty"`
 	Feeds       []*Feed `json:"feeds,omitempty"`
-	Visibility  string  `json:"visibility"`
+	Visibility  string  `json:"visibility,omitempty"`
 	Shared      bool    `json:"is_shared,omitempty"`
 }
 
@@ -105,10 +105,5 @@ func (s *GroupService) Delete(key string) (*Response, error) {
 		return nil, rerr
 	}
 
-	resp, err := s.client.Do(req, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return s.client.Do(req, nil)
 }

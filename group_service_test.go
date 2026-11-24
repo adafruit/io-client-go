@@ -2,6 +2,7 @@ package adafruitio
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 
@@ -171,4 +172,43 @@ func TestGroupDelete(t *testing.T) {
 	assert.NotNil(response)
 
 	assert.Equal(200, response.StatusCode)
+}
+
+func TestGroupCreateOmitsEmptyVisibility(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("groups"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "POST")
+			body, _ := io.ReadAll(r.Body)
+			assert.NotContains(t, string(body), "visibility")
+			fmt.Fprint(w, `{"id":1, "name":"test"}`)
+		},
+	)
+
+	_, _, err := client.Group.Create(&Group{Name: "test"})
+
+	assert.Nil(t, err)
+}
+
+func TestGroupDeleteError(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("groups/test"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "DELETE")
+			http.Error(w, `{"error":"not found"}`, http.StatusNotFound)
+		},
+	)
+
+	assert := assert.New(t)
+
+	response, err := client.Group.Delete("test")
+
+	assert.NotNil(err)
+	if assert.NotNil(response) {
+		assert.Equal(404, response.StatusCode)
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -111,4 +112,21 @@ func TestClientAuthentication(t *testing.T) {
 	resp, err := client.Do(req, nil)
 	assert.Nil(err)
 	assert.NotNil(resp)
+}
+
+func TestCheckResponseNullBody(t *testing.T) {
+	assert := assert.New(t)
+
+	req, _ := http.NewRequest("GET", "https://io.adafruit.com/api/v2/test", nil)
+	resp := &http.Response{
+		StatusCode: 500,
+		Body:       io.NopCloser(strings.NewReader("null")),
+		Request:    req,
+	}
+
+	err := CheckResponse(resp)
+
+	if assert.IsType(&ErrorResponse{}, err) {
+		assert.Equal("null", err.(*ErrorResponse).Message)
+	}
 }

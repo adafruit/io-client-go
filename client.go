@@ -127,8 +127,8 @@ func CheckResponse(r *http.Response) error {
 
 	// try to unmarshal error response Body into AIOError record
 	jerr := json.Unmarshal(body, &errorResponse.AIOError)
-	if jerr != nil {
-		// failed to unmarshal API Error, use body as Message
+	if jerr != nil || errorResponse.AIOError == nil {
+		// body was not a JSON error object, use body as Message
 		errorResponse.Message = string(body)
 	} else {
 		errorResponse.Message = errorResponse.AIOError.Message
