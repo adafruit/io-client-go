@@ -148,3 +148,62 @@ func TestFeedDeleteError(t *testing.T) {
 		assert.Equal(404, response.StatusCode)
 	}
 }
+
+func TestFeedUpdateSendsFalse(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/test"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "PATCH")
+			testBody(t, r, `{"history":false}`+"\n")
+			fmt.Fprint(w, `{"id":1, "key":"test", "history":false}`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	// History is explicitly false; Enabled and StatusNotify are nil, so they
+	// must be left out of the request.
+	ufeed, _, err := client.Feed.Update(context.Background(), "test", &Feed{History: Bool(false)})
+
+	assert.Nil(err)
+	if assert.NotNil(ufeed.History) {
+		assert.False(*ufeed.History)
+	}
+}
+
+func TestFeedGetDecodesFields(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/test"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			fmt.Fprint(w, `{
+				"id": 1, "key": "test", "history": true, "enabled": false,
+				"status_notify": false, "status_timeout": 4320, "writable": true,
+				"group": {"id": 2, "key": "default", "name": "Default", "user_id": 2},
+				"groups": [{"id": 2, "key": "default", "name": "Default", "user_id": 2}]
+			}`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	feed, _, err := client.Feed.Get(context.Background(), "test")
+
+	assert.Nil(err)
+	assert.Equal(Bool(true), feed.History)
+	assert.Equal(Bool(false), feed.Enabled)
+	assert.Equal(Bool(false), feed.StatusNotify)
+	assert.Equal(4320, feed.StatusTimeout)
+	assert.True(feed.Writable)
+	if assert.NotNil(feed.Group) {
+		assert.Equal("default", feed.Group.Key)
+		assert.Equal(2, feed.Group.UserID)
+	}
+	if assert.Len(feed.Groups, 1) {
+		assert.Equal("default", feed.Groups[0].Key)
+	}
+}

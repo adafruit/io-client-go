@@ -14,6 +14,12 @@ type Owner struct {
 	Username string `json:"username,omitempty"`
 }
 
+// Feed is an Adafruit IO feed.
+//
+// The boolean settings History, Enabled, and StatusNotify are pointers so that
+// false can be sent to the API: a nil pointer is left out of create and update
+// requests, leaving the server's value unchanged. Use Bool to set them, for
+// example &Feed{History: Bool(false)}.
 type Feed struct {
 	ID            int    `json:"id,omitempty"`
 	Name          string `json:"name,omitempty"`
@@ -23,17 +29,25 @@ type Feed struct {
 	Description   string `json:"description,omitempty"`
 	UnitType      string `json:"unit_type,omitempty"`
 	UnitSymbol    string `json:"unit_symbol,omitempty"`
-	History       bool   `json:"history,omitempty"`
+	History       *bool  `json:"history,omitempty"`
 	Visibility    string `json:"visibility,omitempty"`
 	License       string `json:"license,omitempty"`
-	Enabled       bool   `json:"enabled,omitempty"`
+	Enabled       *bool  `json:"enabled,omitempty"`
 	LastValue     string `json:"last_value,omitempty"`
 	Status        string `json:"status,omitempty"`
-	StatusNotify  bool   `json:"status_notify,omitempty"`
+	StatusNotify  *bool  `json:"status_notify,omitempty"`
 	StatusTimeout int    `json:"status_timeout,omitempty"`
-	Shared        bool   `json:"is_shared,omitempty"`
 	CreatedAt     string `json:"created_at,omitempty"`
 	UpdatedAt     string `json:"updated_at,omitempty"`
+
+	// Writable reports whether the current user can write to the feed. It is
+	// read-only, and only returned when getting a single feed.
+	Writable bool `json:"writable,omitempty"`
+
+	// Group is the feed's primary group, and Groups lists every group the
+	// feed belongs to. Both are read-only.
+	Group  *Group   `json:"group,omitempty"`
+	Groups []*Group `json:"groups,omitempty"`
 }
 
 // All lists all available feeds.
