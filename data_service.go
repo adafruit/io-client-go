@@ -4,28 +4,33 @@ import (
 	"context"
 	"errors"
 	"path"
+	"time"
 )
 
 // Data is a single value in a Feed. See Feed for how pointer fields work.
 type Data struct {
-	ID           *string  `json:"id,omitempty"`
-	Value        *string  `json:"value,omitempty"`
-	FeedID       *int64   `json:"feed_id,omitempty"`
-	FeedKey      *string  `json:"feed_key,omitempty"`
-	GroupID      *int64   `json:"group_id,omitempty"`
-	Expiration   *string  `json:"expiration,omitempty"`
-	Latitude     *float64 `json:"lat,omitempty"`
-	Longitude    *float64 `json:"lon,omitempty"`
-	Elevation    *float64 `json:"ele,omitempty"`
-	CompletedAt  *string  `json:"completed_at,omitempty"`
-	CreatedAt    *string  `json:"created_at,omitempty"`
-	UpdatedAt    *string  `json:"updated_at,omitempty"`
-	CreatedEpoch *float64 `json:"created_epoch,omitempty"`
+	ID           *string    `json:"id,omitempty"`
+	Value        *string    `json:"value,omitempty"`
+	FeedID       *int64     `json:"feed_id,omitempty"`
+	FeedKey      *string    `json:"feed_key,omitempty"`
+	GroupID      *int64     `json:"group_id,omitempty"`
+	Expiration   *Timestamp `json:"expiration,omitempty"`
+	Latitude     *float64   `json:"lat,omitempty"`
+	Longitude    *float64   `json:"lon,omitempty"`
+	Elevation    *float64   `json:"ele,omitempty"`
+	CompletedAt  *Timestamp `json:"completed_at,omitempty"`
+	CreatedAt    *Timestamp `json:"created_at,omitempty"`
+	UpdatedAt    *Timestamp `json:"updated_at,omitempty"`
+	CreatedEpoch *float64   `json:"created_epoch,omitempty"`
 }
 
+// DataFilter filters the Data returned by DataService.All and Search. Zero
+// values are left out of the request.
 type DataFilter struct {
-	StartTime string `url:"start_time,omitempty"`
-	EndTime   string `url:"end_time,omitempty"`
+	// StartTime returns only Data created after this time.
+	StartTime time.Time `url:"start_time,omitempty"`
+	// EndTime returns only Data created before this time.
+	EndTime time.Time `url:"end_time,omitempty"`
 }
 
 type DataService struct {

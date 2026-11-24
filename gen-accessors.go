@@ -32,20 +32,22 @@ var types = map[string]bool{
 	"Owner": true,
 }
 
-// zeroValues maps the basic types used in pointer fields to their zero values.
+// zeroValues maps the types whose getters return a value (rather than a
+// pointer) to their zero values.
 var zeroValues = map[string]string{
-	"bool":    "false",
-	"float64": "0",
-	"int":     "0",
-	"int64":   "0",
-	"string":  `""`,
+	"bool":      "false",
+	"float64":   "0",
+	"int":       "0",
+	"int64":     "0",
+	"string":    `""`,
+	"Timestamp": "Timestamp{}",
 }
 
 type accessor struct {
 	typeName  string
 	fieldName string
 	fieldType string // the type the field points to, e.g. "string" or "Owner"
-	basic     bool   // true for basic types, false for struct pointers
+	basic     bool   // true if the getter returns a value, false for struct pointers
 }
 
 func main() {

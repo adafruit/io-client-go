@@ -103,12 +103,11 @@ last, _, err := client.Data.Last(ctx, "temperature")
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Println(last.GetValue(), last.GetCreatedAt())
+fmt.Println(last.GetValue(), last.GetCreatedAt().Format(time.Kitchen))
 
-// List the values in a time range
+// List the values from the last 24 hours
 values, _, err := client.Data.All(ctx, "temperature", &adafruitio.DataFilter{
-	StartTime: "2026-11-01T00:00:00Z",
-	EndTime:   "2026-11-02T00:00:00Z",
+	StartTime: time.Now().Add(-24 * time.Hour),
 })
 if err != nil {
 	log.Fatal(err)
@@ -155,6 +154,34 @@ To read fields, use the `Get` methods, such as `feed.GetName()`. They return
 the zero value when a field (or the struct itself) is `nil`, so you don't need
 nil checks.
 
+### Times
+
+Times such as `CreatedAt` and `Expiration` are `*adafruitio.Timestamp` values.
+`Timestamp` embeds `time.Time`, so you can use any `time.Time` method on it:
+
+```go
+feed, _, err := client.Feed.Get(ctx, "temperature")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println("created", feed.GetCreatedAt().Format(time.RFC1123))
+```
+
+To send a value with a time in the past, for example when uploading readings
+that were stored offline, set its `CreatedAt`:
+
+```go
+_, _, err := client.Data.Create(ctx, "temperature", &adafruitio.Data{
+	Value:     adafruitio.Ptr("21.0"),
+	CreatedAt: &adafruitio.Timestamp{Time: time.Now().Add(-time.Hour)},
+})
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+The `StartTime` and `EndTime` of a `DataFilter` are plain `time.Time` values.
+
 ### Errors
 
 When the API returns an error status, methods return an
@@ -191,6 +218,9 @@ v3 changes the API in several ways:
 - **Pointer fields:** every field of `Feed`, `Group`, `Data`, and `Owner` is a
   pointer, and IDs are `int64`. Set fields with `adafruitio.Ptr` and read them
   with the `Get` methods. See [Pointer fields](#pointer-fields).
+- **Times:** `CreatedAt`, `UpdatedAt`, `Expiration`, and `CompletedAt` are
+  `*adafruitio.Timestamp` instead of strings, and `DataFilter.StartTime` and
+  `EndTime` are `time.Time`. See [Times](#times).
 - **Feed fields:** `Feed.Shared` is removed, because the API doesn't return it
   for feeds. `Feed.Writable`, `Feed.Group`, and `Feed.Groups` are new.
 - **Fixes:** `Data.Search` now applies its filter, `Delete` methods return

@@ -45,6 +45,15 @@ which return the zero value for nil fields:
 	})
 	fmt.Println(feed.GetName())
 
+# Times
+
+Times such as CreatedAt are *Timestamp values. Timestamp embeds time.Time, so
+any time.Time method can be used on it:
+
+	fmt.Println(feed.GetCreatedAt().Format(time.RFC1123))
+
+The StartTime and EndTime of a DataFilter are plain time.Time values.
+
 # Errors
 
 When the API returns an error status, methods return an *ErrorResponse

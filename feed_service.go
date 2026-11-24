@@ -23,24 +23,24 @@ type Owner struct {
 // for example &Feed{Description: Ptr(""), History: Ptr(false)}, and the
 // generated Get methods, such as GetName, to read them without nil checks.
 type Feed struct {
-	ID            *int64  `json:"id,omitempty"`
-	Name          *string `json:"name,omitempty"`
-	Key           *string `json:"key,omitempty"`
-	Username      *string `json:"username,omitempty"`
-	Owner         *Owner  `json:"owner,omitempty"`
-	Description   *string `json:"description,omitempty"`
-	UnitType      *string `json:"unit_type,omitempty"`
-	UnitSymbol    *string `json:"unit_symbol,omitempty"`
-	History       *bool   `json:"history,omitempty"`
-	Visibility    *string `json:"visibility,omitempty"`
-	License       *string `json:"license,omitempty"`
-	Enabled       *bool   `json:"enabled,omitempty"`
-	LastValue     *string `json:"last_value,omitempty"`
-	Status        *string `json:"status,omitempty"`
-	StatusNotify  *bool   `json:"status_notify,omitempty"`
-	StatusTimeout *int    `json:"status_timeout,omitempty"`
-	CreatedAt     *string `json:"created_at,omitempty"`
-	UpdatedAt     *string `json:"updated_at,omitempty"`
+	ID            *int64     `json:"id,omitempty"`
+	Name          *string    `json:"name,omitempty"`
+	Key           *string    `json:"key,omitempty"`
+	Username      *string    `json:"username,omitempty"`
+	Owner         *Owner     `json:"owner,omitempty"`
+	Description   *string    `json:"description,omitempty"`
+	UnitType      *string    `json:"unit_type,omitempty"`
+	UnitSymbol    *string    `json:"unit_symbol,omitempty"`
+	History       *bool      `json:"history,omitempty"`
+	Visibility    *string    `json:"visibility,omitempty"`
+	License       *string    `json:"license,omitempty"`
+	Enabled       *bool      `json:"enabled,omitempty"`
+	LastValue     *string    `json:"last_value,omitempty"`
+	Status        *string    `json:"status,omitempty"`
+	StatusNotify  *bool      `json:"status_notify,omitempty"`
+	StatusTimeout *int       `json:"status_timeout,omitempty"`
+	CreatedAt     *Timestamp `json:"created_at,omitempty"`
+	UpdatedAt     *Timestamp `json:"updated_at,omitempty"`
 
 	// Writable reports whether the current user can write to the feed. It is
 	// read-only, and only returned when getting a single feed.

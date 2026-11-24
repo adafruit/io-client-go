@@ -4,17 +4,17 @@
 package adafruitio
 
 // GetCompletedAt returns the CompletedAt field if it's non-nil, zero value otherwise.
-func (d *Data) GetCompletedAt() string {
+func (d *Data) GetCompletedAt() Timestamp {
 	if d == nil || d.CompletedAt == nil {
-		return ""
+		return Timestamp{}
 	}
 	return *d.CompletedAt
 }
 
 // GetCreatedAt returns the CreatedAt field if it's non-nil, zero value otherwise.
-func (d *Data) GetCreatedAt() string {
+func (d *Data) GetCreatedAt() Timestamp {
 	if d == nil || d.CreatedAt == nil {
-		return ""
+		return Timestamp{}
 	}
 	return *d.CreatedAt
 }
@@ -36,9 +36,9 @@ func (d *Data) GetElevation() float64 {
 }
 
 // GetExpiration returns the Expiration field if it's non-nil, zero value otherwise.
-func (d *Data) GetExpiration() string {
+func (d *Data) GetExpiration() Timestamp {
 	if d == nil || d.Expiration == nil {
-		return ""
+		return Timestamp{}
 	}
 	return *d.Expiration
 }
@@ -92,9 +92,9 @@ func (d *Data) GetLongitude() float64 {
 }
 
 // GetUpdatedAt returns the UpdatedAt field if it's non-nil, zero value otherwise.
-func (d *Data) GetUpdatedAt() string {
+func (d *Data) GetUpdatedAt() Timestamp {
 	if d == nil || d.UpdatedAt == nil {
-		return ""
+		return Timestamp{}
 	}
 	return *d.UpdatedAt
 }
@@ -108,9 +108,9 @@ func (d *Data) GetValue() string {
 }
 
 // GetCreatedAt returns the CreatedAt field if it's non-nil, zero value otherwise.
-func (f *Feed) GetCreatedAt() string {
+func (f *Feed) GetCreatedAt() Timestamp {
 	if f == nil || f.CreatedAt == nil {
-		return ""
+		return Timestamp{}
 	}
 	return *f.CreatedAt
 }
@@ -236,9 +236,9 @@ func (f *Feed) GetUnitType() string {
 }
 
 // GetUpdatedAt returns the UpdatedAt field if it's non-nil, zero value otherwise.
-func (f *Feed) GetUpdatedAt() string {
+func (f *Feed) GetUpdatedAt() Timestamp {
 	if f == nil || f.UpdatedAt == nil {
-		return ""
+		return Timestamp{}
 	}
 	return *f.UpdatedAt
 }
@@ -268,9 +268,9 @@ func (f *Feed) GetWritable() bool {
 }
 
 // GetCreatedAt returns the CreatedAt field if it's non-nil, zero value otherwise.
-func (g *Group) GetCreatedAt() string {
+func (g *Group) GetCreatedAt() Timestamp {
 	if g == nil || g.CreatedAt == nil {
-		return ""
+		return Timestamp{}
 	}
 	return *g.CreatedAt
 }
@@ -324,9 +324,9 @@ func (g *Group) GetShared() bool {
 }
 
 // GetUpdatedAt returns the UpdatedAt field if it's non-nil, zero value otherwise.
-func (g *Group) GetUpdatedAt() string {
+func (g *Group) GetUpdatedAt() Timestamp {
 	if g == nil || g.UpdatedAt == nil {
-		return ""
+		return Timestamp{}
 	}
 	return *g.UpdatedAt
 }

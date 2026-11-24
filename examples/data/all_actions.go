@@ -180,12 +180,12 @@ func main() {
 	time.Sleep(2 * time.Second)
 
 	// Now, generate a single point and do a filtered search for it
-	t := time.Now().Unix() // get current time
+	t := time.Now()
 	time.Sleep(2 * time.Second)
 	client.Data.Create(ctx, feed.GetKey(), &adafruitio.Data{Value: adafruitio.Ptr(rval())}) // create point 2 seconds later
 
-	title(fmt.Sprintf("Filtered Data, since %v", t))
-	dts, _, err = client.Data.All(ctx, feed.GetKey(), &adafruitio.DataFilter{StartTime: fmt.Sprintf("%d", t)})
+	title(fmt.Sprintf("Filtered Data, since %v", t.Format(time.RFC3339)))
+	dts, _, err = client.Data.All(ctx, feed.GetKey(), &adafruitio.DataFilter{StartTime: t})
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)

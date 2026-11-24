@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -125,8 +126,8 @@ func TestAllDataFilter(t *testing.T) {
 	mux.HandleFunc(serverPattern("feeds/temperature/data"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
-			testQuery(t, r, "start_time", "2000-01-01")
-			testQuery(t, r, "end_time", "2010-01-01")
+			testQuery(t, r, "start_time", "2000-01-01T00:00:00Z")
+			testQuery(t, r, "end_time", "2010-01-01T00:00:00Z")
 			fmt.Fprint(w, `[{"id":"1", "value":"67.112"}]`)
 		},
 	)
@@ -135,8 +136,8 @@ func TestAllDataFilter(t *testing.T) {
 
 	// with no params
 	datapoints, response, err := client.Data.All(context.Background(), "temperature", &DataFilter{
-		StartTime: "2000-01-01",
-		EndTime:   "2010-01-01",
+		StartTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+		EndTime:   time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC),
 	})
 	datapoint := datapoints[0]
 
@@ -155,8 +156,8 @@ func TestSearchDataFilter(t *testing.T) {
 	mux.HandleFunc(serverPattern("feeds/temperature/data"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
-			testQuery(t, r, "start_time", "2000-01-01")
-			testQuery(t, r, "end_time", "2010-01-01")
+			testQuery(t, r, "start_time", "2000-01-01T00:00:00Z")
+			testQuery(t, r, "end_time", "2010-01-01T00:00:00Z")
 			fmt.Fprint(w, `[{"id":"1", "value":"67.112"}]`)
 		},
 	)
@@ -164,8 +165,8 @@ func TestSearchDataFilter(t *testing.T) {
 	assert := assert.New(t)
 
 	datapoints, response, err := client.Data.Search(context.Background(), "temperature", &DataFilter{
-		StartTime: "2000-01-01",
-		EndTime:   "2010-01-01",
+		StartTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+		EndTime:   time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC),
 	})
 
 	assert.Nil(err)

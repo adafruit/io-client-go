@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -39,16 +40,18 @@ func TestAccessors(t *testing.T) {
 				assert.True(t, got.IsZero(), "%s should return the zero value", name)
 			}
 
-			// a set field is returned
+			// a set field is returned: struct pointer getters return the
+			// pointer itself, all others return the value it points to
+			returnsPointer := method.Type.Out(0).Kind() == reflect.Ptr
 			set := reflect.New(structType)
 			want := reflect.New(field.Type.Elem())
-			if field.Type.Elem().Kind() != reflect.Struct {
+			if !returnsPointer {
 				want.Elem().Set(nonZero(field.Type.Elem()))
 			}
 			set.Elem().FieldByIndex(field.Index).Set(want)
 
 			got := method.Func.Call([]reflect.Value{set})[0]
-			if field.Type.Elem().Kind() == reflect.Struct {
+			if returnsPointer {
 				assert.Equal(t, want.Interface(), got.Interface(), name)
 			} else {
 				assert.Equal(t, want.Elem().Interface(), got.Interface(), name)
@@ -57,8 +60,12 @@ func TestAccessors(t *testing.T) {
 	}
 }
 
-// nonZero returns a non-zero value of a basic type.
+// nonZero returns a non-zero value of a type that a getter returns by value.
 func nonZero(typ reflect.Type) reflect.Value {
+	if typ == reflect.TypeOf(Timestamp{}) {
+		return reflect.ValueOf(Timestamp{time.Date(2026, 11, 24, 16, 5, 19, 0, time.UTC)})
+	}
+
 	v := reflect.New(typ).Elem()
 	switch typ.Kind() {
 	case reflect.Bool:
