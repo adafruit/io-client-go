@@ -128,11 +128,9 @@ func CheckResponse(r *http.Response) error {
 	// try to unmarshal error response Body into AIOError record
 	jerr := json.Unmarshal(body, &errorResponse.AIOError)
 	if jerr != nil {
-		fmt.Println("> failed to parse response body as JSON")
-		// failed to unmarhsal API Error, use body as Message
+		// failed to unmarshal API Error, use body as Message
 		errorResponse.Message = string(body)
 	} else {
-		fmt.Println("> parsed response body as JSON", errorResponse.AIOError)
 		errorResponse.Message = errorResponse.AIOError.Message
 	}
 
