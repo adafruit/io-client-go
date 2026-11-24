@@ -1,60 +1,407 @@
 # talk to adafruit io from Go
 
-[![GoDoc](http://godoc.org/github.com/adafruit/io-client-go?status.svg)](http://godoc.org/github.com/adafruit/io-client-go)
-[![Build Status](https://travis-ci.org/adafruit/io-client-go.svg?branch=master)](https://travis-ci.org/adafruit/io-client-go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/adafruit/io-client-go/v3.svg)](https://pkg.go.dev/github.com/adafruit/io-client-go/v3)
+[![CI](https://github.com/adafruit/io-client-go/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/adafruit/io-client-go/actions/workflows/ci.yml)
 
-A go client library for talking to your io.adafruit.com account.
+A Go client library for the [Adafruit IO HTTP API (v2)](https://io.adafruit.com/api/docs/http.html).
 
-Requires go version 1.18 or better. Running tests uses the github.com/stretchr/testify library. To run tests, run:
+Requires Go 1.18 or later.
+
+## Installation
 
 ```bash
-$ go test ./...
+go get github.com/adafruit/io-client-go/v3
+```
+
+```go
+import adafruitio "github.com/adafruit/io-client-go/v3"
 ```
 
 ## Usage
 
-First, add the package:
-```bash
-$ go get github.com/adafruit/io-client-go/v2
-```
+### Creating a client
 
-Then import it:
-```go
-import "github.com/adafruit/io-client-go/v2"
-```
-
-The io-client-go repository provides the `adafruitio` package.
-
-Authentication for Adafruit IO is managed by providing your Adafruit IO username and token. The token is sent in the head of all web requests via the `X-AIO-Key` header. This is handled for
-you by the client library, which expects you API Token when it is initialized.
-
-We recommend keeping the Token in an environment variable to avoid including it
-directly in your code.
+Create a client with your Adafruit IO username and key. We recommend keeping
+your key in an environment variable rather than in your code:
 
 ```go
 client := adafruitio.NewClient(os.Getenv("ADAFRUIT_IO_USERNAME"), os.Getenv("ADAFRUIT_IO_KEY"))
-feeds, _, err := adafruitio.Feed.All()
 ```
 
-Some API calls expect parameters, which must be provided when making the call.
+The client sends your key in the `X-AIO-Key` header of every request.
+
+By default, the client uses `http.DefaultClient`. To set timeouts, a proxy, or
+other transport settings, pass your own `http.Client`:
 
 ```go
-feed := &aio.Feed{Name: "my-new-feed"}
-feed := client.Feed.Create(newFeed)
+client := adafruitio.NewClient(username, key,
+	adafruitio.WithHTTPClient(&http.Client{Timeout: 10 * time.Second}),
+)
 ```
 
-Data related API calls expect a Feed to be set before the call is made.
+### Contexts
 
+Every API method takes a `context.Context` as its first argument, so you can
+cancel requests or give them deadlines. If the context is cancelled or times
+out, the method returns `context.Canceled` or `context.DeadlineExceeded`.
 
 ```go
-feed, _, ferr := client.Feed.Get("my-new-feed")
-client.SetFeed(feed)
-client.Data.Create(&adafruitio.Data{Value: 100})
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+feeds, _, err := client.Feed.All(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(len(feeds), "feeds")
 ```
 
-More detailed example usage can be found in the [./examples](./examples) directory
+### Feeds
 
-For full package documentation, visit the godoc page at https://godoc.org/github.com/adafruit/io-client-go
+```go
+// Create a feed
+feed, _, err := client.Feed.Create(ctx, &adafruitio.Feed{
+	Name:        adafruitio.Ptr("Temperature"),
+	Description: adafruitio.Ptr("Living room temperature"),
+})
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println("created", feed.GetKey())
+
+// Update it. Only the fields you set are sent.
+feed, _, err = client.Feed.Update(ctx, feed.GetKey(), &adafruitio.Feed{
+	History: adafruitio.Ptr(false),
+})
+if err != nil {
+	log.Fatal(err)
+}
+
+// Delete it
+_, err = client.Feed.Delete(ctx, feed.GetKey())
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+### Data
+
+Data methods take the key of the feed they read from or write to:
+
+```go
+// Send a value to the "temperature" feed
+data, _, err := client.Data.Create(ctx, "temperature", &adafruitio.Data{
+	Value: adafruitio.Ptr("22.5"),
+})
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println("created", data.GetID())
+
+// Get the most recent value
+last, _, err := client.Data.Last(ctx, "temperature")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(last.GetValue(), last.GetCreatedAt().Format(time.Kitchen))
+
+// List the values from the last 24 hours
+values, _, err := client.Data.All(ctx, "temperature", &adafruitio.DataFilter{
+	StartTime: time.Now().Add(-24 * time.Hour),
+})
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(len(values), "values")
+```
+
+To send several values in one request, use `CreateBatch`:
+
+```go
+created, _, err := client.Data.CreateBatch(ctx, "temperature", []*adafruitio.Data{
+	{Value: adafruitio.Ptr("22.5")},
+	{Value: adafruitio.Ptr("22.7")},
+})
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println("created", len(created), "values")
+```
+
+#### Pagination
+
+`Data.All` returns one page of values at a time, newest first: 100 by default,
+and up to 1000 with `Limit`. To get every page, pass the `NextBefore` cursor
+from each page's response as the `Before` of the next request, until it is
+empty. `Total` is the number of matching values across all pages.
+
+```go
+filter := &adafruitio.DataFilter{
+	Limit:   1000,
+	EndTime: time.Now(),
+	Include: []string{"value", "created_at"}, // only return these fields
+}
+for {
+	page, resp, err := client.Data.All(ctx, "temperature", filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, data := range page {
+		fmt.Println(data.GetCreatedAt().Format(time.RFC3339), data.GetValue())
+	}
+	if resp.NextBefore == "" {
+		break // no more pages
+	}
+	filter.Before = resp.NextBefore
+}
+```
+
+If you set `StartTime`, also set `EndTime`. With only a `StartTime`, the API
+returns the oldest values after it rather than the newest. Requesting many
+pages quickly can hit the API's rate limit, which returns a `429` status.
+
+#### Latest values and charts
+
+`LastValue` returns a feed's most recent value. Unlike `Last`, it works with
+read-only access, so you can use it on other people's public feeds:
+
+```go
+latest, _, err := client.Data.LastValue(ctx, "temperature")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(latest.GetValue())
+```
+
+`Chart` returns a feed's values over a time range, aggregated into time
+slices, the way charts on io.adafruit.com show them:
+
+```go
+chart, _, err := client.Data.Chart(ctx, "temperature", &adafruitio.ChartFilter{
+	Hours:      24,    // the last 24 hours
+	Resolution: 60,    // in 60-minute slices
+	Field:      "max", // with the maximum value of each slice
+})
+if err != nil {
+	log.Fatal(err)
+}
+for _, row := range chart.Data { // each row is in the order of chart.Columns
+	fmt.Println(row[0], row[1])
+}
+```
+
+### Groups
+
+```go
+groups, _, err := client.Group.All(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+for _, group := range groups {
+	fmt.Println(group.GetName(), len(group.Feeds), "feeds")
+}
+```
+
+Feeds can belong to several groups. Add feeds to a group, list them, and get
+the latest value of each, in one request:
+
+```go
+_, _, err := client.Group.AddFeed(ctx, "weather", "temperature")
+if err != nil {
+	log.Fatal(err)
+}
+
+feeds, _, err := client.Group.Feeds(ctx, "weather")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(len(feeds), "feeds in the group")
+
+values, _, err := client.Group.LastValues(ctx, "weather")
+if err != nil {
+	log.Fatal(err)
+}
+for feedKey, value := range values {
+	if value != nil { // nil if the feed has no data yet
+		fmt.Println(feedKey, *value)
+	}
+}
+```
+
+Within a group other than your default group, feed keys are scoped to the
+group, such as `weather.temperature`. `Group.CreateFeed` creates a feed directly
+in a group, and `Group.RemoveFeed` takes a feed out of a group without deleting
+it.
+
+### Your account
+
+```go
+user, _, err := client.User.Get(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println("signed in as", user.GetUsername())
+
+throttle, _, err := client.User.Throttle(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("sent %d of %d data points allowed per minute\n",
+	throttle.GetActiveDataRate(), throttle.GetDataRateLimit())
+```
+
+### Pointer fields
+
+Like [go-github](https://github.com/google/go-github), every field of `Feed`,
+`Group`, and `Data` is a pointer. This lets the library tell the difference
+between a field you didn't set and one you set to an empty value:
+
+- A `nil` field is left out of create and update requests, so the server keeps
+  its current value.
+- A non-`nil` field is always sent, even if it is `""`, `0`, or `false`.
+
+Use `adafruitio.Ptr` to set fields. For example, to clear a feed's description
+and turn off its history:
+
+```go
+_, _, err := client.Feed.Update(ctx, "temperature", &adafruitio.Feed{
+	Description: adafruitio.Ptr(""),
+	History:     adafruitio.Ptr(false),
+})
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+To read fields, use the `Get` methods, such as `feed.GetName()`. They return
+the zero value when a field (or the struct itself) is `nil`, so you don't need
+nil checks.
+
+### Times
+
+Times such as `CreatedAt` and `Expiration` are `*adafruitio.Timestamp` values.
+`Timestamp` embeds `time.Time`, so you can use any `time.Time` method on it:
+
+```go
+feed, _, err := client.Feed.Get(ctx, "temperature")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println("created", feed.GetCreatedAt().Format(time.RFC1123))
+```
+
+To send a value with a time in the past, for example when uploading readings
+that were stored offline, set its `CreatedAt`:
+
+```go
+_, _, err := client.Data.Create(ctx, "temperature", &adafruitio.Data{
+	Value:     adafruitio.Ptr("21.0"),
+	CreatedAt: &adafruitio.Timestamp{Time: time.Now().Add(-time.Hour)},
+})
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+The `StartTime` and `EndTime` of a `DataFilter` are plain `time.Time` values.
+
+### Errors
+
+When the API returns an error status, methods return an
+`*adafruitio.ErrorResponse` with the API's error message, along with the
+`*adafruitio.Response` so you can inspect it further:
+
+```go
+_, _, err := client.Feed.Get(ctx, "does-not-exist")
+
+var apiErr *adafruitio.ErrorResponse
+if errors.As(err, &apiErr) {
+	fmt.Println(apiErr.Response.StatusCode, apiErr.Message)
+}
+```
+
+Some errors, such as a failed validation, have several messages. `Message`
+joins them, and `AIOError.Messages` lists them separately.
+
+When you exceed a [rate limit](https://io.adafruit.com/api/docs/http.html#rate-limiting),
+such as the number of data points you can send per minute, methods return an
+`*adafruitio.RateLimitError`. The API doesn't say when to retry, so wait a
+minute:
+
+```go
+_, _, err := client.Data.Create(ctx, "temperature", &adafruitio.Data{
+	Value: adafruitio.Ptr("22.5"),
+})
+
+var rateErr *adafruitio.RateLimitError
+if errors.As(err, &rateErr) {
+	fmt.Println("rate limited:", rateErr.Message)
+	time.Sleep(time.Minute)
+}
+```
+
+A `RateLimitError` is also an `ErrorResponse`, so code that checks for
+`ErrorResponse` handles rate limits too.
+
+Methods return an error without making a request if a feed key, group key, or
+record ID is empty.
+
+### More examples
+
+The [examples](./examples) directory has complete programs for feeds, groups,
+and data, and a small web server for browsing your feeds.
+
+Full documentation is on [pkg.go.dev](https://pkg.go.dev/github.com/adafruit/io-client-go/v3).
+
+## Upgrading from v2
+
+v3 changes the API in several ways:
+
+- **Import path:** `github.com/adafruit/io-client-go/v2` is now
+  `github.com/adafruit/io-client-go/v3`.
+- **Contexts:** every API method takes a `context.Context` as its first
+  argument, and `Client.Do` is now `Do(ctx, req, v)`.
+- **No more `SetFeed`:** Data methods take the feed key instead, for example
+  `client.Data.Last(ctx, "temperature")`. `Client.SetFeed`,
+  `FeedService.CurrentFeed`, and `FeedService.Path` are removed.
+- **Pointer fields:** every field of `Feed`, `Group`, `Data`, and `Owner` is a
+  pointer, and IDs are `int64`. Set fields with `adafruitio.Ptr` and read them
+  with the `Get` methods. See [Pointer fields](#pointer-fields).
+- **Times:** `CreatedAt`, `UpdatedAt`, `Expiration`, and `CompletedAt` are
+  `*adafruitio.Timestamp` instead of strings, and `DataFilter.StartTime` and
+  `EndTime` are `time.Time`. See [Times](#times).
+- **Feed fields:** `Feed.Shared` is removed, because the API doesn't return it
+  for feeds. `Feed.Writable`, `Feed.Group`, and `Feed.Groups` are new.
+- **Fixes:** `Data.Search` now applies its filter, `Delete` methods return
+  the response alongside an error, and the client no longer prints to stdout
+  when the API returns an error. Reading data that has a location (`lat`,
+  `lon`, `ele`) no longer fails, since the API returns those as strings from
+  most endpoints. Errors with several messages are decoded properly, rather
+  than reported as raw JSON.
+- **Errors:** rate limit (`429`) responses return a `*RateLimitError`, which
+  wraps the `*ErrorResponse`. `AIOError.Messages` lists every message in an
+  error.
+- **Keys in URLs:** feed keys, group keys, and record IDs are escaped, so a key
+  containing characters such as `/` or `?` can't change which endpoint is
+  called, and an empty key returns an error without making a request.
+- **Removed `Response.Debug`:** it couldn't work, because the response body
+  has already been read. To see raw requests and responses, use
+  `WithHTTPClient` with a logging `http.RoundTripper`.
+
+## Development
+
+Run the tests with:
+
+```bash
+go test ./...
+```
+
+The `Get` methods in `accessors.go` are generated. After changing the fields of
+`Feed`, `Group`, `Data`, or `Owner`, regenerate them with:
+
+```bash
+go generate ./...
+```
 
 ## License
 

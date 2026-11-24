@@ -5,14 +5,17 @@ package adafruitio
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
 	"runtime"
+	"strconv"
+	"strings"
 
 	"github.com/google/go-querystring/query"
 )
@@ -22,6 +25,8 @@ const (
 	APIPath       = "/api/v2"
 	xAIOKeyHeader = "X-AIO-Key"
 )
+
+var errNilContext = errors.New("context must be non-nil")
 
 type Client struct {
 	// Base HTTP client used to talk to io.adafruit.com
@@ -38,28 +43,144 @@ type Client struct {
 	Data  *DataService
 	Feed  *FeedService
 	Group *GroupService
+	User  *UserService
 }
 
 // Response wraps http.Response and adds fields unique to Adafruit's API.
 type Response struct {
 	*http.Response
+
+	// Total is the total number of records matching a paginated request,
+	// across all pages, from the X-Pagination-Total header. The API notes it
+	// may be up to 5 minutes behind. It is 0 for requests that aren't
+	// paginated.
+	Total int
+
+	// NextBefore is the cursor for the next page of a paginated request, such
+	// as DataService.All. Set it as the Before field of the next request's
+	// DataFilter. It is empty when there are no more pages.
+	NextBefore string
 }
 
-func (r *Response) Debug() {
-	all, _ := ioutil.ReadAll(r.Body)
-	fmt.Println("---")
-	fmt.Println(string(all))
-	fmt.Println("---")
+// newResponse wraps resp and populates the pagination fields from its headers.
+func newResponse(resp *http.Response) *Response {
+	response := &Response{Response: resp}
+	response.Total, _ = strconv.Atoi(resp.Header.Get("X-Pagination-Total"))
+	if next := nextLink(resp.Header.Get("Link")); next != "" {
+		if u, err := url.Parse(next); err == nil {
+			response.NextBefore = u.Query().Get("before")
+		}
+	}
+	return response
 }
 
+// nextLink returns the URL of the next page from a Link header, or "" if
+// there isn't one.
+//
+// Adafruit IO's Link header doesn't follow the usual format. It looks like
+//
+//	<current page URL>;rel="next", <next page URL>
+//
+// where rel="next" marks the URL that follows it, rather than the one before
+// it. On the last page, only the current page URL is present. To stay
+// compatible if the API adopts the standard format, where the URL before
+// rel="next" is the next page, that URL is used when nothing follows it.
+func nextLink(header string) string {
+	links := parseLinks(header)
+	for i, link := range links {
+		if !strings.Contains(link.params, `rel="next"`) {
+			continue
+		}
+		if i+1 < len(links) && !strings.Contains(links[i+1].params, "rel=") {
+			return links[i+1].url
+		}
+		return link.url
+	}
+	return ""
+}
+
+// link is one entry of a Link header: a URL and the parameters after it.
+type link struct {
+	url    string
+	params string
+}
+
+// parseLinks splits a Link header into its entries. It finds each URL by its
+// angle brackets rather than splitting on commas, because URLs may contain
+// commas, for example in an include=value,created_at query parameter.
+func parseLinks(header string) []link {
+	var links []link
+	for {
+		start := strings.Index(header, "<")
+		if start < 0 {
+			return links
+		}
+		end := strings.Index(header[start:], ">")
+		if end < 0 {
+			return links
+		}
+		end += start
+
+		params := header[end+1:]
+		if next := strings.Index(params, "<"); next >= 0 {
+			params = params[:next]
+		}
+		links = append(links, link{url: header[start+1 : end], params: params})
+		header = header[end+1:]
+	}
+}
+
+// AIOError is the body of an API error response.
 type AIOError struct {
-	Message string `json:"error"`
+	// Messages are the error messages. Most errors have one, but validation
+	// errors, such as creating a feed without a name, may have several.
+	Messages []string
+
+	// Message is Messages joined with "; ".
+	Message string
 }
 
-// ErrorResponse reports one or more errors caused by an API request.
+// UnmarshalJSON implements the json.Unmarshaler interface. The API returns
+// the error as either a string or an array of strings:
+//
+//	{"error": "request failed - cannot process request"}
+//	{"error": ["Name can't be blank", "Key can't be blank"], "status": "bad_request"}
+func (e *AIOError) UnmarshalJSON(b []byte) error {
+	var body struct {
+		Error json.RawMessage `json:"error"`
+	}
+	if err := json.Unmarshal(b, &body); err != nil {
+		return err
+	}
+
+	var one string
+	var many []string
+	switch {
+	case len(body.Error) == 0 || string(body.Error) == "null":
+		e.Messages = nil
+	case json.Unmarshal(body.Error, &one) == nil:
+		e.Messages = []string{one}
+	case json.Unmarshal(body.Error, &many) == nil:
+		e.Messages = many
+	default:
+		return fmt.Errorf("unexpected error field: %s", body.Error)
+	}
+
+	e.Message = strings.Join(e.Messages, "; ")
+	return nil
+}
+
+// ErrorResponse reports an error returned by the API: any response with a
+// status code outside the 200 range.
 type ErrorResponse struct {
 	Response *http.Response // HTTP response that carried the error message
-	Message  string
+
+	// Message is the API's error message, or the response body if it
+	// doesn't contain one.
+	Message string
+
+	// AIOError is the decoded error body, or nil if the body isn't a JSON
+	// error.
 	AIOError *AIOError
 }
 
@@ -73,7 +194,39 @@ func (r *ErrorResponse) Error() string {
 	)
 }
 
-func NewClient(username, key string) *Client {
+// RateLimitError is returned when the API responds with 429 Too Many
+// Requests: either the account's data rate limit (data points created,
+// updated, or deleted per minute) or the overall limit on HTTP requests per
+// minute was exceeded. The API doesn't say when to retry; its documentation
+// suggests waiting a minute.
+//
+// RateLimitError wraps an *ErrorResponse, so errors.As finds either type.
+type RateLimitError struct {
+	*ErrorResponse
+}
+
+// Unwrap returns the underlying *ErrorResponse.
+func (r *RateLimitError) Unwrap() error {
+	return r.ErrorResponse
+}
+
+// ClientOption configures a Client. Pass options to NewClient.
+type ClientOption func(*Client)
+
+// WithHTTPClient sets the HTTP client used to make API requests, for example
+// to configure timeouts, proxies, or transport settings. A nil client is
+// ignored. By default, http.DefaultClient is used.
+func WithHTTPClient(httpClient *http.Client) ClientOption {
+	return func(c *Client) {
+		if httpClient != nil {
+			c.client = httpClient
+		}
+	}
+}
+
+// NewClient returns a Client for the Adafruit IO account identified by
+// username, authenticating with the given API key.
+func NewClient(username, key string, opts ...ClientOption) *Client {
 	c := &Client{username: username, apiKey: key}
 
 	c.SetBaseURL(BaseURL)
@@ -84,6 +237,11 @@ func NewClient(username, key string) *Client {
 	c.Data = &DataService{client: c}
 	c.Feed = &FeedService{client: c}
 	c.Group = &GroupService{client: c}
+	c.User = &UserService{client: c}
+
+	for _, opt := range opts {
+		opt(c)
+	}
 
 	return c
 }
@@ -95,21 +253,6 @@ func (c *Client) SetBaseURL(baseURL string) {
 
 func (c *Client) GetUserKey() (username string, apikey string) {
 	return c.username, c.apiKey
-}
-
-// SetFeed takes a Feed record as a parameter and uses that feed for all
-// subsequent Data related API calls.
-//
-// A Feed must be set before making calls to the Data service.
-func (c *Client) SetFeed(feed *Feed) {
-	c.Feed.CurrentFeed = feed
-}
-
-func (c *Client) checkFeed() error {
-	if c.Feed.CurrentFeed == nil {
-		return fmt.Errorf("CurrentFeed must be set")
-	}
-	return nil
 }
 
 // CheckResponse checks the API response for errors, and returns them if
@@ -124,19 +267,25 @@ func CheckResponse(r *http.Response) error {
 	errorResponse := &ErrorResponse{Response: r}
 
 	// read response body into Error.Message
-	body, _ := ioutil.ReadAll(r.Body)
+	body, _ := io.ReadAll(r.Body)
 
 	// try to unmarshal error response Body into AIOError record
 	jerr := json.Unmarshal(body, &errorResponse.AIOError)
-	if jerr != nil {
-		fmt.Println("> failed to parse response body as JSON")
-		// failed to unmarhsal API Error, use body as Message
+	if jerr != nil || errorResponse.AIOError == nil {
+		// body was not a JSON error object, use body as Message
+		errorResponse.AIOError = nil
+		errorResponse.Message = string(body)
+	} else if errorResponse.AIOError.Message == "" {
+		// JSON without an error message, use body as Message
+		errorResponse.AIOError = nil
 		errorResponse.Message = string(body)
 	} else {
-		fmt.Println("> parsed response body as JSON", errorResponse.AIOError)
 		errorResponse.Message = errorResponse.AIOError.Message
 	}
 
+	if r.StatusCode == http.StatusTooManyRequests {
+		return &RateLimitError{ErrorResponse: errorResponse}
+	}
 	return errorResponse
 }
 
@@ -188,23 +337,32 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 // interface, the raw response body will be written to v, without attempting to
 // first decode it.
 //
+// The request is bound to ctx. If ctx is cancelled or its deadline passes,
+// Do returns ctx.Err().
+//
 // adapted from https://github.com/google/go-github
-func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
+func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+	if ctx == nil {
+		return nil, errNilContext
+	}
 
-	resp, err := c.client.Do(req)
+	resp, err := c.client.Do(req.WithContext(ctx))
 	if err != nil {
+		// If the context was cancelled, its error is more useful than the
+		// wrapped transport error.
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		return nil, err
 	}
 
 	defer func() {
 		// Drain up to 512 bytes and close the body to let the Transport reuse the connection
-		io.CopyN(ioutil.Discard, resp.Body, 512)
+		io.CopyN(io.Discard, resp.Body, 512)
 		resp.Body.Close()
 	}()
 
-	response := &Response{
-		Response: resp,
-	}
+	response := newResponse(resp)
 
 	err = CheckResponse(resp)
 	if err != nil {

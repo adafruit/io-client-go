@@ -1,57 +1,45 @@
 package adafruitio
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestData_MissingFeed(t *testing.T) {
+func TestData_EmptyFeedKey(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc(serverPattern("feeds/temperature/data"),
+	mux.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
-			testMethod(t, r, "POST")
-			fmt.Fprint(w, `{"id":"1", "value":"67.112"}`)
+			t.Errorf("request should not reach the server: %s %s", r.Method, r.URL)
 		},
 	)
 
-	assert := assert.New(t)
+	ctx := context.Background()
+	calls := map[string]func() error{
+		"All":         func() error { _, _, err := client.Data.All(ctx, "", nil); return err },
+		"Search":      func() error { _, _, err := client.Data.Search(ctx, "", nil); return err },
+		"Get":         func() error { _, _, err := client.Data.Get(ctx, "", "1"); return err },
+		"Create":      func() error { _, _, err := client.Data.Create(ctx, "", &Data{}); return err },
+		"CreateBatch": func() error { _, _, err := client.Data.CreateBatch(ctx, "", nil); return err },
+		"Update":      func() error { _, _, err := client.Data.Update(ctx, "", "1", &Data{}); return err },
+		"Delete":      func() error { _, err := client.Data.Delete(ctx, "", "1"); return err },
+		"Next":        func() error { _, _, err := client.Data.Next(ctx, ""); return err },
+		"Prev":        func() error { _, _, err := client.Data.Prev(ctx, ""); return err },
+		"First":       func() error { _, _, err := client.Data.First(ctx, ""); return err },
+		"Last":        func() error { _, _, err := client.Data.Last(ctx, ""); return err },
+		"LastValue":   func() error { _, _, err := client.Data.LastValue(ctx, ""); return err },
+		"Chart":       func() error { _, _, err := client.Data.Chart(ctx, "", nil); return err },
+	}
 
-	dp := &Data{}
-	datapoint, response, err := client.Data.Create(dp)
-
-	assert.NotNil(err)
-	assert.Nil(datapoint)
-	assert.Nil(response)
-
-	assert.Equal(err.Error(), "CurrentFeed must be set")
-}
-
-func TestData_Unauthenticated(t *testing.T) {
-	setup()
-	defer teardown()
-
-	mux.HandleFunc(serverPattern("feeds/temperature/data"),
-		func(w http.ResponseWriter, r *http.Request) {
-			testMethod(t, r, "POST")
-			fmt.Fprint(w, `{"id":"1", "value":"67.112"}`)
-		},
-	)
-
-	assert := assert.New(t)
-
-	dp := &Data{}
-	datapoint, response, err := client.Data.Create(dp)
-
-	assert.NotNil(err)
-	assert.Nil(datapoint)
-	assert.Nil(response)
-
-	assert.Equal(err.Error(), "CurrentFeed must be set")
+	for name, call := range calls {
+		assert.Equal(t, errEmptyFeedKey, call(), name)
+	}
 }
 
 func TestDataCreate(t *testing.T) {
@@ -68,21 +56,19 @@ func TestDataCreate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
 	val := "67.112"
 
 	dp := &Data{
-		Value: val,
+		Value: Ptr(val),
 	}
-	datapoint, response, err := client.Data.Create(dp)
+	datapoint, response, err := client.Data.Create(context.Background(), "temperature", dp)
 
 	assert.Nil(err)
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal("1", datapoint.ID)
-	assert.Equal(val, datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal(val, datapoint.GetValue())
 }
 
 func TestDataGet(t *testing.T) {
@@ -99,16 +85,14 @@ func TestDataGet(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
-	datapoint, response, err := client.Data.Get("1")
+	datapoint, response, err := client.Data.Get(context.Background(), "temperature", "1")
 
 	assert.Nil(err)
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("67.112", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("67.112", datapoint.GetValue())
 }
 
 func TestAllDataNoFilter(t *testing.T) {
@@ -125,18 +109,16 @@ func TestAllDataNoFilter(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
 	// with no params
-	datapoints, response, err := client.Data.All(nil)
+	datapoints, response, err := client.Data.All(context.Background(), "temperature", nil)
 	datapoint := datapoints[0]
 
 	assert.Nil(err)
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("67.112", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("67.112", datapoint.GetValue())
 }
 
 func TestAllDataFilter(t *testing.T) {
@@ -147,20 +129,18 @@ func TestAllDataFilter(t *testing.T) {
 	mux.HandleFunc(serverPattern("feeds/temperature/data"),
 		func(w http.ResponseWriter, r *http.Request) {
 			testMethod(t, r, "GET")
-			testQuery(t, r, "start_time", "2000-01-01")
-			testQuery(t, r, "end_time", "2010-01-01")
+			testQuery(t, r, "start_time", "2000-01-01T00:00:00Z")
+			testQuery(t, r, "end_time", "2010-01-01T00:00:00Z")
 			fmt.Fprint(w, `[{"id":"1", "value":"67.112"}]`)
 		},
 	)
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
 	// with no params
-	datapoints, response, err := client.Data.All(&DataFilter{
-		StartTime: "2000-01-01",
-		EndTime:   "2010-01-01",
+	datapoints, response, err := client.Data.All(context.Background(), "temperature", &DataFilter{
+		StartTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+		EndTime:   time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC),
 	})
 	datapoint := datapoints[0]
 
@@ -168,8 +148,36 @@ func TestAllDataFilter(t *testing.T) {
 	assert.NotNil(datapoint)
 	assert.NotNil(response)
 
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("67.112", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("67.112", datapoint.GetValue())
+}
+
+func TestSearchDataFilter(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			testQuery(t, r, "start_time", "2000-01-01T00:00:00Z")
+			testQuery(t, r, "end_time", "2010-01-01T00:00:00Z")
+			fmt.Fprint(w, `[{"id":"1", "value":"67.112"}]`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	datapoints, response, err := client.Data.Search(context.Background(), "temperature", &DataFilter{
+		StartTime: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
+		EndTime:   time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC),
+	})
+
+	assert.Nil(err)
+	assert.NotNil(response)
+	if assert.Len(datapoints, 1) {
+		assert.Equal("1", datapoints[0].GetID())
+		assert.Equal("67.112", datapoints[0].GetValue())
+	}
 }
 
 func TestDataDelete(t *testing.T) {
@@ -184,9 +192,7 @@ func TestDataDelete(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "test"})
-
-	response, err := client.Data.Delete("1")
+	response, err := client.Data.Delete(context.Background(), "test", "1")
 
 	assert.Nil(err)
 	assert.NotNil(response)
@@ -227,36 +233,235 @@ func TestDataQueue(t *testing.T) {
 	)
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
 	var (
 		datapoint *Data
 		response  *Response
 		err       error
 	)
 
-	datapoint, response, err = client.Data.Next()
+	datapoint, response, err = client.Data.Next(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("1", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("1", datapoint.GetValue())
 
-	datapoint, response, err = client.Data.Prev()
+	datapoint, response, err = client.Data.Prev(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
-	assert.Equal("2", datapoint.ID)
-	assert.Equal("2", datapoint.Value)
+	assert.Equal("2", datapoint.GetID())
+	assert.Equal("2", datapoint.GetValue())
 
-	datapoint, response, err = client.Data.Last()
+	datapoint, response, err = client.Data.Last(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
-	assert.Equal("3", datapoint.ID)
-	assert.Equal("3", datapoint.Value)
+	assert.Equal("3", datapoint.GetID())
+	assert.Equal("3", datapoint.GetValue())
 
-	datapoint, response, err = client.Data.First()
+	datapoint, response, err = client.Data.First(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
-	assert.Equal("1", datapoint.ID)
-	assert.Equal("1", datapoint.Value)
+	assert.Equal("1", datapoint.GetID())
+	assert.Equal("1", datapoint.GetValue())
 
+}
+
+func TestDataDeleteError(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/test/data/1"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "DELETE")
+			http.Error(w, `{"error":"not found"}`, http.StatusNotFound)
+		},
+	)
+
+	assert := assert.New(t)
+
+	response, err := client.Data.Delete(context.Background(), "test", "1")
+
+	assert.NotNil(err)
+	if assert.NotNil(response) {
+		assert.Equal(404, response.StatusCode)
+	}
+}
+
+func TestAllDataPagingFilter(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			testQuery(t, r, "limit", "2")
+			testQuery(t, r, "include", "value,created_at")
+			testQuery(t, r, "before", "abc==")
+			fmt.Fprint(w, `[]`)
+		},
+	)
+
+	_, _, err := client.Data.All(context.Background(), "temperature", &DataFilter{
+		Limit:   2,
+		Include: []string{"value", "created_at"},
+		Before:  "abc==",
+	})
+
+	assert.Nil(t, err)
+}
+
+func TestAllDataPaging(t *testing.T) {
+	setup()
+	defer teardown()
+
+	// three pages, linked by before cursors, in the API's Link header format
+	pages := map[string]struct {
+		body string
+		next string
+	}{
+		"":   {`[{"value":"5"},{"value":"4"}]`, "p2"},
+		"p2": {`[{"value":"3"},{"value":"2"}]`, "p3"},
+		"p3": {`[{"value":"1"}]`, ""},
+	}
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data"),
+		func(w http.ResponseWriter, r *http.Request) {
+			page, ok := pages[r.URL.Query().Get("before")]
+			if !ok {
+				t.Errorf("unexpected before cursor %q", r.URL.Query().Get("before"))
+				return
+			}
+			self := "<http://example.com/data?limit=2>;"
+			if page.next != "" {
+				w.Header().Set("Link", self+`rel="next", <http://example.com/data?before=`+page.next+`&limit=2>`)
+			} else {
+				w.Header().Set("Link", self)
+			}
+			w.Header().Set("X-Pagination-Total", "5")
+			fmt.Fprint(w, page.body)
+		},
+	)
+
+	var values []string
+	filter := &DataFilter{Limit: 2}
+	for {
+		page, response, err := client.Data.All(context.Background(), "temperature", filter)
+		if !assert.Nil(t, err) {
+			return
+		}
+		for _, d := range page {
+			values = append(values, d.GetValue())
+		}
+		if response.NextBefore == "" {
+			break
+		}
+		filter.Before = response.NextBefore
+	}
+
+	assert.Equal(t, []string{"5", "4", "3", "2", "1"}, values)
+}
+
+func TestDataCreateBatch(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data/batch"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "POST")
+			testBody(t, r, `{"data":[{"value":"1"},{"value":"2"}]}`+"\n")
+			fmt.Fprint(w, `[{"id":"a", "value":"1"}, {"id":"b", "value":"2"}]`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	created, response, err := client.Data.CreateBatch(context.Background(), "temperature", []*Data{
+		{Value: Ptr("1")},
+		{Value: Ptr("2")},
+	})
+
+	assert.Nil(err)
+	assert.NotNil(response)
+	if assert.Len(created, 2) {
+		assert.Equal("a", created[0].GetID())
+		assert.Equal("2", created[1].GetValue())
+	}
+}
+
+func TestDataLastValue(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data/last_value"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			testQuery(t, r, "type", "json")
+			fmt.Fprint(w, `{"id": "1", "value": "22.5", "lat": "40.7", "lon": "-74.0", "ele": null}`)
+		},
+	)
+
+	data, _, err := client.Data.LastValue(context.Background(), "temperature")
+
+	assert.Nil(t, err)
+	assert.Equal(t, "22.5", data.GetValue())
+	assert.Equal(t, 40.7, data.GetLatitude())
+}
+
+func TestDataChart(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data/chart"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			testQuery(t, r, "hours", "24")
+			testQuery(t, r, "resolution", "60")
+			testQuery(t, r, "field", "max")
+			fmt.Fprint(w, `{
+				"feed": {"id": 30, "name": "Temperature", "key": "temperature"},
+				"parameters": {"start_time": "2026-11-23T18:13:56Z", "end_time": "2026-11-24T18:13:56Z", "resolution": 60, "hours": 24, "field": "max"},
+				"columns": ["date", "value"],
+				"storage": "agg",
+				"data": [["2026-11-24T17:00:00Z", "22.5"], ["2026-11-24T18:00:00Z", "23"]]
+			}`)
+		},
+	)
+
+	chart, _, err := client.Data.Chart(context.Background(), "temperature", &ChartFilter{
+		Hours:      24,
+		Resolution: 60,
+		Field:      "max",
+	})
+
+	assert := assert.New(t)
+	assert.Nil(err)
+	assert.Equal("temperature", chart.GetFeed().GetKey())
+	assert.Equal(60, chart.GetParameters().GetResolution())
+	assert.Equal("max", chart.GetParameters().GetField())
+	assert.Equal(2026, chart.GetParameters().GetStartTime().Year())
+	assert.Equal("agg", chart.GetStorage())
+	assert.Equal([]string{"date", "value"}, chart.Columns)
+	assert.Equal([][]string{{"2026-11-24T17:00:00Z", "22.5"}, {"2026-11-24T18:00:00Z", "23"}}, chart.Data)
+}
+
+func TestDataChartRaw(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data/chart"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testQuery(t, r, "raw", "true")
+			testQuery(t, r, "start_time", "2026-11-24T00:00:00Z")
+			if r.URL.Query().Has("hours") || r.URL.Query().Has("resolution") || r.URL.Query().Has("field") {
+				t.Errorf("unset filter fields were sent: %s", r.URL.RawQuery)
+			}
+			fmt.Fprint(w, `{"columns": ["date", "value"], "data": []}`)
+		},
+	)
+
+	_, _, err := client.Data.Chart(context.Background(), "temperature", &ChartFilter{
+		StartTime: time.Date(2026, 11, 24, 0, 0, 0, 0, time.UTC),
+		Raw:       true,
+	})
+
+	assert.Nil(t, err)
 }

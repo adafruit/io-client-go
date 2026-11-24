@@ -12,14 +12,26 @@ API v2 Endpoints
   - [x] Read
   - [x] Update
   - [x] Delete
+  - [x] Create Batch
+  - [x] Pagination
+  - [x] Last Value
+  - [x] Chart
   - [x] Helper Methods
     - [x] First
     - [x] Next
     - [x] Last
     - [x] Previous
-- [] Groups
+- [x] Groups
   - [x] Index
   - [x] Create
-  - [X] Read
-  - [X] Update
-  - [X] Delete
+  - [x] Read
+  - [x] Update
+  - [x] Delete
+  - [x] Feeds
+  - [x] Create Feed
+  - [x] Add Feed
+  - [x] Remove Feed
+  - [x] Last Values
+- [x] User
+  - [x] Get
+  - [x] Throttle

@@ -2,13 +2,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"time"
 
-	adafruitio "github.com/adafruit/io-client-go/v2"
+	adafruitio "github.com/adafruit/io-client-go/v3"
 )
 
 var (
@@ -48,20 +49,22 @@ func title(label string) {
 	fmt.Printf("\n\n%v\n\n", label)
 }
 
-func ShowAll(client *adafruitio.Client) {
+func ShowAll(ctx context.Context, client *adafruitio.Client) {
 	// Get the list of all available feeds
-	feeds, _, err := client.Feed.All()
+	feeds, _, err := client.Feed.All(ctx)
 	if err != nil {
 		fmt.Println("UNEXPECTED ERROR!", err)
 		panic(err)
 	}
 
 	for _, feed := range feeds {
-		render(feed.Name, feed)
+		render(feed.GetName(), feed)
 	}
 }
 
 func main() {
+	ctx := context.Background()
+
 	prepare()
 
 	client := adafruitio.NewClient(username, key)
@@ -71,45 +74,45 @@ func main() {
 
 	title("All")
 
-	ShowAll(client)
+	ShowAll(ctx, client)
 	time.Sleep(1 * time.Second)
 
 	title("Create")
 
-	newFeed := &adafruitio.Feed{Name: "my-new-feed", Description: "an example of creating feeds"}
-	client.Feed.Create(newFeed)
+	newFeed := &adafruitio.Feed{Name: adafruitio.Ptr("my-new-feed"), Description: adafruitio.Ptr("an example of creating feeds")}
+	client.Feed.Create(ctx, newFeed)
 	render("NEW FEED", newFeed)
 	time.Sleep(1 * time.Second)
 
-	if newFeed.ID == 0 {
+	if newFeed.GetID() == 0 {
 		panic(fmt.Errorf("could not create feed"))
 	}
 
 	title("All")
 
-	ShowAll(client)
+	ShowAll(ctx, client)
 	time.Sleep(1 * time.Second)
 
 	title("Update")
 
-	updatedFeed, _, _ := client.Feed.Update(newFeed.Key, &adafruitio.Feed{Name: "renamed-new-feed"})
+	updatedFeed, _, _ := client.Feed.Update(ctx, newFeed.GetKey(), &adafruitio.Feed{Name: adafruitio.Ptr("renamed-new-feed")})
 	render("UPDATED FEED", updatedFeed)
 	time.Sleep(1 * time.Second)
 
 	title("All")
 
-	ShowAll(client)
+	ShowAll(ctx, client)
 	time.Sleep(1 * time.Second)
 
 	title("Just the new one")
 
-	feed, _, _ := client.Feed.Get(updatedFeed.Key)
+	feed, _, _ := client.Feed.Get(ctx, updatedFeed.GetKey())
 	render("SHOW", feed)
 	time.Sleep(1 * time.Second)
 
 	title("Delete")
 
-	_, err := client.Feed.Delete(newFeed.Key)
+	_, err := client.Feed.Delete(ctx, newFeed.GetKey())
 	if err == nil {
 		fmt.Println("ok")
 	}
@@ -117,6 +120,6 @@ func main() {
 
 	title("All")
 
-	ShowAll(client)
+	ShowAll(ctx, client)
 	time.Sleep(1 * time.Second)
 }
