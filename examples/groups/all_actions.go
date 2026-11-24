@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -51,9 +52,9 @@ func title(label string) {
 	fmt.Printf("\n\n%v\n\n", label)
 }
 
-func ShowAll(client *adafruitio.Client) {
+func ShowAll(ctx context.Context, client *adafruitio.Client) {
 	title("All")
-	groups, _, err := client.Group.All()
+	groups, _, err := client.Group.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -67,6 +68,8 @@ func pause() {
 }
 
 func main() {
+	ctx := context.Background()
+
 	prepare()
 
 	client := adafruitio.NewClient(username, key)
@@ -74,13 +77,13 @@ func main() {
 		client.SetBaseURL(useURL)
 	}
 
-	ShowAll(client)
+	ShowAll(ctx, client)
 	pause()
 
 	// CREATE
 	name := fmt.Sprintf("a_new_group_%d", rand.Int())
 	fmt.Printf("CREATING %v\n", name)
-	g, resp, err := client.Group.Create(&adafruitio.Group{Name: name})
+	g, resp, err := client.Group.Create(ctx, &adafruitio.Group{Name: name})
 	if err != nil {
 		// resp.Debug()
 		fmt.Printf("failed to create group")
@@ -94,7 +97,7 @@ func main() {
 	pause()
 
 	// GET
-	newg, _, err := client.Group.Get(g.Key)
+	newg, _, err := client.Group.Get(ctx, g.Key)
 	if err != nil {
 		panic(err)
 	}
@@ -106,7 +109,7 @@ func main() {
 	g.Description = "Now this group has a description."
 
 	fmt.Printf("changing name to %v\n", g.Name)
-	newg, _, err = client.Group.Update(g.Key, g)
+	newg, _, err = client.Group.Update(ctx, g.Key, g)
 	if err != nil {
 		panic(err)
 	}
@@ -116,12 +119,12 @@ func main() {
 	// DELETE
 	time.Sleep(2 * time.Second)
 	title("deleting group")
-	_, err = client.Group.Delete(newg.Key)
+	_, err = client.Group.Delete(ctx, newg.Key)
 	if err == nil {
 		fmt.Println("ok")
 	}
 	pause()
 
 	// SHOW ALL
-	ShowAll(client)
+	ShowAll(ctx, client)
 }

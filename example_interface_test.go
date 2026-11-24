@@ -1,6 +1,7 @@
 package adafruitio_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,6 +15,8 @@ var (
 )
 
 func Example() {
+	ctx := context.Background()
+
 	// Load ADAFRUIT_IO_KEY from environment
 	client := adafruitio.NewClient(os.Getenv("ADAFRUIT_IO_USERNAME"), os.Getenv("ADAFRUIT_IO_KEY"))
 
@@ -21,7 +24,7 @@ func Example() {
 	client.SetBaseURL("http://localhost:3002")
 
 	// Get the list of all available feeds
-	feeds, _, err := client.Feed.All()
+	feeds, _, err := client.Feed.All(ctx)
 	if err != nil {
 		fmt.Println("UNEXPECTED ERROR!", err)
 		panic(err)

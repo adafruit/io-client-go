@@ -1,6 +1,7 @@
 package adafruitio
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -22,7 +23,7 @@ func TestData_MissingFeed(t *testing.T) {
 	assert := assert.New(t)
 
 	dp := &Data{}
-	datapoint, response, err := client.Data.Create(dp)
+	datapoint, response, err := client.Data.Create(context.Background(), dp)
 
 	assert.NotNil(err)
 	assert.Nil(datapoint)
@@ -45,7 +46,7 @@ func TestData_Unauthenticated(t *testing.T) {
 	assert := assert.New(t)
 
 	dp := &Data{}
-	datapoint, response, err := client.Data.Create(dp)
+	datapoint, response, err := client.Data.Create(context.Background(), dp)
 
 	assert.NotNil(err)
 	assert.Nil(datapoint)
@@ -75,7 +76,7 @@ func TestDataCreate(t *testing.T) {
 	dp := &Data{
 		Value: val,
 	}
-	datapoint, response, err := client.Data.Create(dp)
+	datapoint, response, err := client.Data.Create(context.Background(), dp)
 
 	assert.Nil(err)
 	assert.NotNil(datapoint)
@@ -101,7 +102,7 @@ func TestDataGet(t *testing.T) {
 
 	client.SetFeed(&Feed{Key: "temperature"})
 
-	datapoint, response, err := client.Data.Get("1")
+	datapoint, response, err := client.Data.Get(context.Background(), "1")
 
 	assert.Nil(err)
 	assert.NotNil(datapoint)
@@ -128,7 +129,7 @@ func TestAllDataNoFilter(t *testing.T) {
 	client.SetFeed(&Feed{Key: "temperature"})
 
 	// with no params
-	datapoints, response, err := client.Data.All(nil)
+	datapoints, response, err := client.Data.All(context.Background(), nil)
 	datapoint := datapoints[0]
 
 	assert.Nil(err)
@@ -158,7 +159,7 @@ func TestAllDataFilter(t *testing.T) {
 	client.SetFeed(&Feed{Key: "temperature"})
 
 	// with no params
-	datapoints, response, err := client.Data.All(&DataFilter{
+	datapoints, response, err := client.Data.All(context.Background(), &DataFilter{
 		StartTime: "2000-01-01",
 		EndTime:   "2010-01-01",
 	})
@@ -189,7 +190,7 @@ func TestSearchDataFilter(t *testing.T) {
 
 	client.SetFeed(&Feed{Key: "temperature"})
 
-	datapoints, response, err := client.Data.Search(&DataFilter{
+	datapoints, response, err := client.Data.Search(context.Background(), &DataFilter{
 		StartTime: "2000-01-01",
 		EndTime:   "2010-01-01",
 	})
@@ -216,7 +217,7 @@ func TestDataDelete(t *testing.T) {
 
 	client.SetFeed(&Feed{Key: "test"})
 
-	response, err := client.Data.Delete("1")
+	response, err := client.Data.Delete(context.Background(), "1")
 
 	assert.Nil(err)
 	assert.NotNil(response)
@@ -265,25 +266,25 @@ func TestDataQueue(t *testing.T) {
 		err       error
 	)
 
-	datapoint, response, err = client.Data.Next()
+	datapoint, response, err = client.Data.Next(context.Background())
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal("1", datapoint.ID)
 	assert.Equal("1", datapoint.Value)
 
-	datapoint, response, err = client.Data.Prev()
+	datapoint, response, err = client.Data.Prev(context.Background())
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal("2", datapoint.ID)
 	assert.Equal("2", datapoint.Value)
 
-	datapoint, response, err = client.Data.Last()
+	datapoint, response, err = client.Data.Last(context.Background())
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal("3", datapoint.ID)
 	assert.Equal("3", datapoint.Value)
 
-	datapoint, response, err = client.Data.First()
+	datapoint, response, err = client.Data.First(context.Background())
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal("1", datapoint.ID)
@@ -306,7 +307,7 @@ func TestDataDeleteError(t *testing.T) {
 
 	client.SetFeed(&Feed{Key: "test"})
 
-	response, err := client.Data.Delete("1")
+	response, err := client.Data.Delete(context.Background(), "1")
 
 	assert.NotNil(err)
 	if assert.NotNil(response) {

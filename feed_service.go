@@ -1,6 +1,7 @@
 package adafruitio
 
 import (
+	"context"
 	"fmt"
 	"path"
 )
@@ -49,7 +50,7 @@ type Feed struct {
 }
 
 // All lists all available feeds.
-func (s *FeedService) All() ([]*Feed, *Response, error) {
+func (s *FeedService) All(ctx context.Context) ([]*Feed, *Response, error) {
 	path := "feeds"
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
@@ -59,7 +60,7 @@ func (s *FeedService) All() ([]*Feed, *Response, error) {
 
 	// request populates Feed slice
 	feeds := make([]*Feed, 0)
-	resp, err := s.client.Do(req, &feeds)
+	resp, err := s.client.Do(ctx, req, &feeds)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -69,7 +70,7 @@ func (s *FeedService) All() ([]*Feed, *Response, error) {
 
 // Get returns the Feed record identified by the given parameter. Parameter can
 // be the Feed's Name, Key, or ID.
-func (s *FeedService) Get(key string) (*Feed, *Response, error) {
+func (s *FeedService) Get(ctx context.Context, key string) (*Feed, *Response, error) {
 	path := fmt.Sprintf("feeds/%s", key)
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
@@ -78,7 +79,7 @@ func (s *FeedService) Get(key string) (*Feed, *Response, error) {
 	}
 
 	var feed Feed
-	resp, err := s.client.Do(req, &feed)
+	resp, err := s.client.Do(ctx, req, &feed)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -87,7 +88,7 @@ func (s *FeedService) Get(key string) (*Feed, *Response, error) {
 }
 
 // Create takes a Feed record, creates it, and returns the updated record or an error.
-func (s *FeedService) Create(feed *Feed) (*Feed, *Response, error) {
+func (s *FeedService) Create(ctx context.Context, feed *Feed) (*Feed, *Response, error) {
 	path := "feeds"
 
 	req, rerr := s.client.NewRequest("POST", path, feed)
@@ -95,7 +96,7 @@ func (s *FeedService) Create(feed *Feed) (*Feed, *Response, error) {
 		return nil, nil, rerr
 	}
 
-	resp, err := s.client.Do(req, feed)
+	resp, err := s.client.Do(ctx, req, feed)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -107,7 +108,7 @@ func (s *FeedService) Create(feed *Feed) (*Feed, *Response, error) {
 // record instance or an error.
 //
 // Only the Feed Name and Description can be modified.
-func (s *FeedService) Update(key string, feed *Feed) (*Feed, *Response, error) {
+func (s *FeedService) Update(ctx context.Context, key string, feed *Feed) (*Feed, *Response, error) {
 	path := fmt.Sprintf("feeds/%s", key)
 
 	req, rerr := s.client.NewRequest("PATCH", path, feed)
@@ -116,7 +117,7 @@ func (s *FeedService) Update(key string, feed *Feed) (*Feed, *Response, error) {
 	}
 
 	var updatedFeed Feed
-	resp, err := s.client.Do(req, &updatedFeed)
+	resp, err := s.client.Do(ctx, req, &updatedFeed)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -125,7 +126,7 @@ func (s *FeedService) Update(key string, feed *Feed) (*Feed, *Response, error) {
 }
 
 // Delete the Feed identified by the given ID.
-func (s *FeedService) Delete(key string) (*Response, error) {
+func (s *FeedService) Delete(ctx context.Context, key string) (*Response, error) {
 	path := fmt.Sprintf("feeds/%s", key)
 
 	req, rerr := s.client.NewRequest("DELETE", path, nil)
@@ -133,5 +134,5 @@ func (s *FeedService) Delete(key string) (*Response, error) {
 		return nil, rerr
 	}
 
-	return s.client.Do(req, nil)
+	return s.client.Do(ctx, req, nil)
 }

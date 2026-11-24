@@ -1,6 +1,7 @@
 package adafruitio
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -68,7 +69,7 @@ func TestGroupAll(t *testing.T) {
 
 	assert := assert.New(t)
 
-	groups, response, err := client.Group.All()
+	groups, response, err := client.Group.All(context.Background())
 
 	assert.Nil(err)
 	assert.NotNil(groups)
@@ -93,7 +94,7 @@ func TestGroupGet(t *testing.T) {
 
 	assert := assert.New(t)
 
-	group, response, err := client.Group.Get("test")
+	group, response, err := client.Group.Get(context.Background(), "test")
 
 	assert.Nil(err)
 	assert.NotNil(group)
@@ -118,7 +119,7 @@ func TestGroupCreate(t *testing.T) {
 
 	ngroup := &Group{Name: "test"}
 
-	group, response, err := client.Group.Create(ngroup)
+	group, response, err := client.Group.Create(context.Background(), ngroup)
 
 	assert.Nil(err)
 	assert.NotNil(group)
@@ -143,7 +144,7 @@ func TestGroupUpdate(t *testing.T) {
 
 	group := &Group{ID: 1, Name: "test"}
 
-	ugroup, response, err := client.Group.Update("test", group)
+	ugroup, response, err := client.Group.Update(context.Background(), "test", group)
 
 	assert.Nil(err)
 	assert.NotNil(ugroup)
@@ -166,7 +167,7 @@ func TestGroupDelete(t *testing.T) {
 
 	assert := assert.New(t)
 
-	response, err := client.Group.Delete("test")
+	response, err := client.Group.Delete(context.Background(), "test")
 
 	assert.Nil(err)
 	assert.NotNil(response)
@@ -187,7 +188,7 @@ func TestGroupCreateOmitsEmptyVisibility(t *testing.T) {
 		},
 	)
 
-	_, _, err := client.Group.Create(&Group{Name: "test"})
+	_, _, err := client.Group.Create(context.Background(), &Group{Name: "test"})
 
 	assert.Nil(t, err)
 }
@@ -205,7 +206,7 @@ func TestGroupDeleteError(t *testing.T) {
 
 	assert := assert.New(t)
 
-	response, err := client.Group.Delete("test")
+	response, err := client.Group.Delete(context.Background(), "test")
 
 	assert.NotNil(err)
 	if assert.NotNil(response) {

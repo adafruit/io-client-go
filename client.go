@@ -5,7 +5,9 @@ package adafruitio
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -21,6 +23,8 @@ const (
 	APIPath       = "/api/v2"
 	xAIOKeyHeader = "X-AIO-Key"
 )
+
+var errNilContext = errors.New("context must be non-nil")
 
 type Client struct {
 	// Base HTTP client used to talk to io.adafruit.com
@@ -72,7 +76,23 @@ func (r *ErrorResponse) Error() string {
 	)
 }
 
-func NewClient(username, key string) *Client {
+// ClientOption configures a Client. Pass options to NewClient.
+type ClientOption func(*Client)
+
+// WithHTTPClient sets the HTTP client used to make API requests, for example
+// to configure timeouts, proxies, or transport settings. A nil client is
+// ignored. By default, http.DefaultClient is used.
+func WithHTTPClient(httpClient *http.Client) ClientOption {
+	return func(c *Client) {
+		if httpClient != nil {
+			c.client = httpClient
+		}
+	}
+}
+
+// NewClient returns a Client for the Adafruit IO account identified by
+// username, authenticating with the given API key.
+func NewClient(username, key string, opts ...ClientOption) *Client {
 	c := &Client{username: username, apiKey: key}
 
 	c.SetBaseURL(BaseURL)
@@ -83,6 +103,10 @@ func NewClient(username, key string) *Client {
 	c.Data = &DataService{client: c}
 	c.Feed = &FeedService{client: c}
 	c.Group = &GroupService{client: c}
+
+	for _, opt := range opts {
+		opt(c)
+	}
 
 	return c
 }
@@ -185,11 +209,22 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 // interface, the raw response body will be written to v, without attempting to
 // first decode it.
 //
+// The request is bound to ctx. If ctx is cancelled or its deadline passes,
+// Do returns ctx.Err().
+//
 // adapted from https://github.com/google/go-github
-func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
+func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+	if ctx == nil {
+		return nil, errNilContext
+	}
 
-	resp, err := c.client.Do(req)
+	resp, err := c.client.Do(req.WithContext(ctx))
 	if err != nil {
+		// If the context was cancelled, its error is more useful than the
+		// wrapped transport error.
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		return nil, err
 	}
 

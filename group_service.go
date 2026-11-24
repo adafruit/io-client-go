@@ -2,7 +2,10 @@
 
 package adafruitio
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type Group struct {
 	ID          int     `json:"id,omitempty"`
@@ -23,7 +26,7 @@ type GroupService struct {
 }
 
 // All returns all Groups for the current account.
-func (s *GroupService) All() ([]*Group, *Response, error) {
+func (s *GroupService) All(ctx context.Context) ([]*Group, *Response, error) {
 	path := "groups"
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
@@ -33,7 +36,7 @@ func (s *GroupService) All() ([]*Group, *Response, error) {
 
 	// request populates Feed slice
 	groups := make([]*Group, 0)
-	resp, err := s.client.Do(req, &groups)
+	resp, err := s.client.Do(ctx, req, &groups)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -42,7 +45,7 @@ func (s *GroupService) All() ([]*Group, *Response, error) {
 }
 
 // Create makes a new Group and either returns a new Group instance or an error.
-func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
+func (s *GroupService) Create(ctx context.Context, g *Group) (*Group, *Response, error) {
 	path := "groups"
 
 	req, rerr := s.client.NewRequest("POST", path, g)
@@ -51,7 +54,7 @@ func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
 	}
 
 	var group Group
-	resp, err := s.client.Do(req, &group)
+	resp, err := s.client.Do(ctx, req, &group)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -60,7 +63,7 @@ func (s *GroupService) Create(g *Group) (*Group, *Response, error) {
 }
 
 // Get returns the Group record identified by the given ID
-func (s *GroupService) Get(key string) (*Group, *Response, error) {
+func (s *GroupService) Get(ctx context.Context, key string) (*Group, *Response, error) {
 	path := fmt.Sprintf("groups/%s", key)
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
@@ -69,7 +72,7 @@ func (s *GroupService) Get(key string) (*Group, *Response, error) {
 	}
 
 	var group Group
-	resp, err := s.client.Do(req, &group)
+	resp, err := s.client.Do(ctx, req, &group)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -79,7 +82,7 @@ func (s *GroupService) Get(key string) (*Group, *Response, error) {
 
 // Update takes an ID and a Group record, updates it, and returns a new Group
 // instance or an error.
-func (s *GroupService) Update(key string, group *Group) (*Group, *Response, error) {
+func (s *GroupService) Update(ctx context.Context, key string, group *Group) (*Group, *Response, error) {
 	path := fmt.Sprintf("groups/%s", key)
 
 	req, rerr := s.client.NewRequest("PATCH", path, group)
@@ -88,7 +91,7 @@ func (s *GroupService) Update(key string, group *Group) (*Group, *Response, erro
 	}
 
 	var updatedGroup Group
-	resp, err := s.client.Do(req, &updatedGroup)
+	resp, err := s.client.Do(ctx, req, &updatedGroup)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -97,7 +100,7 @@ func (s *GroupService) Update(key string, group *Group) (*Group, *Response, erro
 }
 
 // Delete the Group identified by the given ID.
-func (s *GroupService) Delete(key string) (*Response, error) {
+func (s *GroupService) Delete(ctx context.Context, key string) (*Response, error) {
 	path := fmt.Sprintf("groups/%s", key)
 
 	req, rerr := s.client.NewRequest("DELETE", path, nil)
@@ -105,5 +108,5 @@ func (s *GroupService) Delete(key string) (*Response, error) {
 		return nil, rerr
 	}
 
-	return s.client.Do(req, nil)
+	return s.client.Do(ctx, req, nil)
 }

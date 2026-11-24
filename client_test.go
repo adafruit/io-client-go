@@ -1,12 +1,15 @@
 package adafruitio
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -109,7 +112,7 @@ func TestClientAuthentication(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(req)
 
-	resp, err := client.Do(req, nil)
+	resp, err := client.Do(context.Background(), req, nil)
 	assert.Nil(err)
 	assert.NotNil(resp)
 }
@@ -129,4 +132,96 @@ func TestCheckResponseNullBody(t *testing.T) {
 	if assert.IsType(&ErrorResponse{}, err) {
 		assert.Equal("null", err.(*ErrorResponse).Message)
 	}
+}
+
+// countingTransport counts requests before passing them to the default transport.
+type countingTransport struct {
+	count int
+}
+
+func (t *countingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	t.count++
+	return http.DefaultTransport.RoundTrip(r)
+}
+
+func TestWithHTTPClient(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds"),
+		func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprint(w, `[]`)
+		},
+	)
+
+	transport := &countingTransport{}
+	c := NewClient(testUser, "test-key", WithHTTPClient(&http.Client{Transport: transport}))
+	c.SetBaseURL(server.URL)
+
+	_, _, err := c.Feed.All(context.Background())
+
+	assert.Nil(t, err)
+	assert.Equal(t, 1, transport.count)
+}
+
+func TestWithHTTPClientNil(t *testing.T) {
+	c := NewClient(testUser, "test-key", WithHTTPClient(nil))
+
+	assert.Equal(t, http.DefaultClient, c.client)
+}
+
+func TestDoCanceledContext(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds"),
+		func(w http.ResponseWriter, r *http.Request) {
+			t.Error("request should not reach the server")
+		},
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	feeds, response, err := client.Feed.All(ctx)
+
+	assert.True(t, errors.Is(err, context.Canceled), "got error %v", err)
+	assert.Nil(t, feeds)
+	assert.Nil(t, response)
+}
+
+func TestDoContextDeadline(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds"),
+		func(w http.ResponseWriter, r *http.Request) {
+			// respond only after the client has given up
+			select {
+			case <-r.Context().Done():
+			case <-time.After(5 * time.Second):
+			}
+		},
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+
+	_, _, err := client.Feed.All(ctx)
+
+	assert.True(t, errors.Is(err, context.DeadlineExceeded), "got error %v", err)
+}
+
+func TestDoNilContext(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req, err := client.NewRequest("GET", "feeds", nil)
+	assert.Nil(t, err)
+
+	//lint:ignore SA1012 testing that a nil context is rejected
+	response, err := client.Do(nil, req, nil)
+
+	assert.Equal(t, errNilContext, err)
+	assert.Nil(t, response)
 }

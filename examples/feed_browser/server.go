@@ -71,7 +71,7 @@ func main() {
 
 			fmt.Fprint(w, "<h1>Feeds</h1>")
 
-			feeds, _, err := client.Feed.All()
+			feeds, _, err := client.Feed.All(r.Context())
 			if err != nil {
 				fmt.Fprintf(w, "ERROR finding feed. %v", err.Error())
 				return
@@ -108,7 +108,7 @@ func main() {
 				return
 			}
 
-			feed, _, err := client.Feed.Get(feedName)
+			feed, _, err := client.Feed.Get(r.Context(), feedName)
 
 			if err != nil {
 				fmt.Fprintf(w, "ERROR finding feed. %v", err.Error())
@@ -119,7 +119,7 @@ func main() {
 			client.SetFeed(feed)
 
 			// get all Data for the given Feed
-			data, _, err := client.Data.All(nil)
+			data, _, err := client.Data.All(r.Context(), nil)
 			if err != nil {
 				fmt.Fprintf(w, "ERROR loading data. %v", err.Error())
 				return

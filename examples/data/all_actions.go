@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -65,13 +66,15 @@ func title(label string) {
 }
 
 func main() {
+	ctx := context.Background()
+
 	prepare()
 
 	client := adafruitio.NewClient(username, key)
 	if useURL != "" {
 		client.SetBaseURL(useURL)
 	}
-	feed, _, ferr := client.Feed.Get(feedName)
+	feed, _, ferr := client.Feed.Get(ctx, feedName)
 	if ferr != nil {
 		panic(ferr)
 	}
@@ -82,14 +85,14 @@ func main() {
 
 	title("Create and Check")
 
-	dp, _, err := client.Data.Create(val)
+	dp, _, err := client.Data.Create(ctx, val)
 	if err != nil {
 		fmt.Println("unable to create data")
 		panic(err)
 	}
 	render("new point", dp)
 
-	ndp, _, err := client.Data.Get(dp.ID)
+	ndp, _, err := client.Data.Get(ctx, dp.ID)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -97,10 +100,10 @@ func main() {
 	render("found point", ndp)
 
 	// update point
-	client.Data.Update(dp.ID, &adafruitio.Data{Value: rval()})
+	client.Data.Update(ctx, dp.ID, &adafruitio.Data{Value: rval()})
 
 	// reload
-	ndp, _, err = client.Data.Get(dp.ID)
+	ndp, _, err = client.Data.Get(ctx, dp.ID)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -110,12 +113,12 @@ func main() {
 
 	// Generate some more Data to fill out the stream
 	for i := 0; i < 4; i += 1 {
-		client.Data.Create(&adafruitio.Data{Value: rval()})
+		client.Data.Create(ctx, &adafruitio.Data{Value: rval()})
 	}
 
 	// Display all Data in the stream
 	title("All Data")
-	dts, _, err := client.Data.All(nil)
+	dts, _, err := client.Data.All(ctx, nil)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -128,28 +131,28 @@ func main() {
 	// stream commands: Last, Prev, and Next
 	title("Queue related commands")
 
-	ndp, _, err = client.Data.Last()
+	ndp, _, err = client.Data.Last(ctx)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
 	}
 	render("last point", ndp)
 
-	ndp, _, err = client.Data.Prev()
+	ndp, _, err = client.Data.Prev(ctx)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
 	}
 	render("prev point", ndp)
 
-	ndp, _, err = client.Data.First()
+	ndp, _, err = client.Data.First(ctx)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
 	}
 	render("first point", ndp)
 
-	ndp, _, err = client.Data.Next()
+	ndp, _, err = client.Data.Next(ctx)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -158,7 +161,7 @@ func main() {
 
 	// delete
 	title("Delete")
-	_, derr := client.Data.Delete(ndp.ID)
+	_, derr := client.Data.Delete(ctx, ndp.ID)
 	if derr == nil {
 		fmt.Println("ok")
 	} else {
@@ -167,7 +170,7 @@ func main() {
 	time.Sleep(1 * time.Second)
 
 	title("All Data (updated)")
-	dts, _, err = client.Data.All(nil)
+	dts, _, err = client.Data.All(ctx, nil)
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)
@@ -180,10 +183,10 @@ func main() {
 	// Now, generate a single point and do a filtered search for it
 	t := time.Now().Unix() // get current time
 	time.Sleep(2 * time.Second)
-	client.Data.Create(&adafruitio.Data{Value: rval()}) // create point 2 seconds later
+	client.Data.Create(ctx, &adafruitio.Data{Value: rval()}) // create point 2 seconds later
 
 	title(fmt.Sprintf("Filtered Data, since %v", t))
-	dts, _, err = client.Data.All(&adafruitio.DataFilter{StartTime: fmt.Sprintf("%d", t)})
+	dts, _, err = client.Data.All(ctx, &adafruitio.DataFilter{StartTime: fmt.Sprintf("%d", t)})
 	if err != nil {
 		fmt.Println("unable to retrieve data")
 		panic(err)

@@ -1,6 +1,7 @@
 package adafruitio
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -21,7 +22,7 @@ func TestFeedAll(t *testing.T) {
 
 	assert := assert.New(t)
 
-	feeds, response, err := client.Feed.All()
+	feeds, response, err := client.Feed.All(context.Background())
 
 	assert.Nil(err)
 	assert.NotNil(feeds)
@@ -46,7 +47,7 @@ func TestFeedGet(t *testing.T) {
 
 	assert := assert.New(t)
 
-	feed, response, err := client.Feed.Get("test")
+	feed, response, err := client.Feed.Get(context.Background(), "test")
 
 	assert.Nil(err)
 	assert.NotNil(feed)
@@ -71,7 +72,7 @@ func TestFeedCreate(t *testing.T) {
 
 	nfeed := &Feed{Name: "test"}
 
-	feed, response, err := client.Feed.Create(nfeed)
+	feed, response, err := client.Feed.Create(context.Background(), nfeed)
 
 	assert.Nil(err)
 	assert.NotNil(feed)
@@ -96,7 +97,7 @@ func TestFeedUpdate(t *testing.T) {
 
 	feed := &Feed{ID: 1, Name: "test"}
 
-	ufeed, response, err := client.Feed.Update("test", feed)
+	ufeed, response, err := client.Feed.Update(context.Background(), "test", feed)
 
 	assert.Nil(err)
 	assert.NotNil(ufeed)
@@ -119,7 +120,7 @@ func TestFeedDelete(t *testing.T) {
 
 	assert := assert.New(t)
 
-	response, err := client.Feed.Delete("test")
+	response, err := client.Feed.Delete(context.Background(), "test")
 
 	assert.Nil(err)
 	assert.NotNil(response)
@@ -140,7 +141,7 @@ func TestFeedDeleteError(t *testing.T) {
 
 	assert := assert.New(t)
 
-	response, err := client.Feed.Delete("test")
+	response, err := client.Feed.Delete(context.Background(), "test")
 
 	assert.NotNil(err)
 	if assert.NotNil(response) {
