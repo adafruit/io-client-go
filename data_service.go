@@ -56,27 +56,10 @@ func (s *DataService) All(opt *DataFilter) ([]*Data, *Response, error) {
 	return datas, resp, nil
 }
 
-// Search has the same response format as All, but it accepts optional params
-// with which your data can be queried.
+// Search returns Data for the currently selected Feed that matches the given
+// filter. It is equivalent to All.
 func (s *DataService) Search(filter *DataFilter) ([]*Data, *Response, error) {
-	path, ferr := s.client.Feed.Path("/data")
-	if ferr != nil {
-		return nil, nil, ferr
-	}
-
-	req, rerr := s.client.NewRequest("GET", path, nil)
-	if rerr != nil {
-		return nil, nil, rerr
-	}
-
-	// request populates Feed slice
-	datas := make([]*Data, 0)
-	resp, err := s.client.Do(req, &datas)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return datas, resp, nil
+	return s.All(filter)
 }
 
 // Get returns a single Data element, identified by the given ID parameter.

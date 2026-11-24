@@ -172,6 +172,36 @@ func TestAllDataFilter(t *testing.T) {
 	assert.Equal("67.112", datapoint.Value)
 }
 
+func TestSearchDataFilter(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc(serverPattern("feeds/temperature/data"),
+		func(w http.ResponseWriter, r *http.Request) {
+			testMethod(t, r, "GET")
+			testQuery(t, r, "start_time", "2000-01-01")
+			testQuery(t, r, "end_time", "2010-01-01")
+			fmt.Fprint(w, `[{"id":"1", "value":"67.112"}]`)
+		},
+	)
+
+	assert := assert.New(t)
+
+	client.SetFeed(&Feed{Key: "temperature"})
+
+	datapoints, response, err := client.Data.Search(&DataFilter{
+		StartTime: "2000-01-01",
+		EndTime:   "2010-01-01",
+	})
+
+	assert.Nil(err)
+	assert.NotNil(response)
+	if assert.Len(datapoints, 1) {
+		assert.Equal("1", datapoints[0].ID)
+		assert.Equal("67.112", datapoints[0].Value)
+	}
+}
+
 func TestDataDelete(t *testing.T) {
 	setup()
 	defer teardown()
