@@ -3,23 +3,10 @@ package adafruitio
 import (
 	"context"
 	"fmt"
-	"path"
 )
 
 type FeedService struct {
-	// CurrentFeed is the Feed used for all Data access.
-	CurrentFeed *Feed
-
 	client *Client
-}
-
-// Path generates a Feed-specific path with the given suffix.
-func (s *FeedService) Path(suffix string) (string, error) {
-	ferr := s.client.checkFeed()
-	if ferr != nil {
-		return "", ferr
-	}
-	return path.Join(fmt.Sprintf("feeds/%v", s.CurrentFeed.Key), suffix), nil
 }
 
 type Owner struct {

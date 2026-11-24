@@ -120,21 +120,6 @@ func (c *Client) GetUserKey() (username string, apikey string) {
 	return c.username, c.apiKey
 }
 
-// SetFeed takes a Feed record as a parameter and uses that feed for all
-// subsequent Data related API calls.
-//
-// A Feed must be set before making calls to the Data service.
-func (c *Client) SetFeed(feed *Feed) {
-	c.Feed.CurrentFeed = feed
-}
-
-func (c *Client) checkFeed() error {
-	if c.Feed.CurrentFeed == nil {
-		return fmt.Errorf("CurrentFeed must be set")
-	}
-	return nil
-}
-
 // CheckResponse checks the API response for errors, and returns them if
 // present. A response is considered an error if it has a status code outside
 // the 200 range.

@@ -2,7 +2,8 @@ package adafruitio
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"path"
 )
 
 // Data are the values contained by a Feed.
@@ -31,12 +32,23 @@ type DataService struct {
 	client *Client
 }
 
-// All returns all Data for the currently selected Feed. See Client.SetFeed()
-// for details on selecting a Feed.
-func (s *DataService) All(ctx context.Context, opt *DataFilter) ([]*Data, *Response, error) {
-	path, ferr := s.client.Feed.Path("/data")
-	if ferr != nil {
-		return nil, nil, ferr
+var errEmptyFeedKey = errors.New("feed key must not be empty")
+
+// dataPath builds the path for a feed's data endpoints, e.g.
+// dataPath("temperature", "last") returns "feeds/temperature/data/last".
+func dataPath(feedKey, suffix string) (string, error) {
+	if feedKey == "" {
+		return "", errEmptyFeedKey
+	}
+	return path.Join("feeds", feedKey, "data", suffix), nil
+}
+
+// All returns Data for the Feed identified by feedKey, optionally filtered by
+// opt. opt may be nil.
+func (s *DataService) All(ctx context.Context, feedKey string, opt *DataFilter) ([]*Data, *Response, error) {
+	path, perr := dataPath(feedKey, "")
+	if perr != nil {
+		return nil, nil, perr
 	}
 
 	path, oerr := addOptions(path, opt)
@@ -49,7 +61,6 @@ func (s *DataService) All(ctx context.Context, opt *DataFilter) ([]*Data, *Respo
 		return nil, nil, rerr
 	}
 
-	// request populates Feed slice
 	datas := make([]*Data, 0)
 	resp, err := s.client.Do(ctx, req, &datas)
 	if err != nil {
@@ -59,39 +70,24 @@ func (s *DataService) All(ctx context.Context, opt *DataFilter) ([]*Data, *Respo
 	return datas, resp, nil
 }
 
-// Search returns Data for the currently selected Feed that matches the given
-// filter. It is equivalent to All.
-func (s *DataService) Search(ctx context.Context, filter *DataFilter) ([]*Data, *Response, error) {
-	return s.All(ctx, filter)
+// Search returns Data for the Feed identified by feedKey that matches the
+// given filter. It is equivalent to All.
+func (s *DataService) Search(ctx context.Context, feedKey string, filter *DataFilter) ([]*Data, *Response, error) {
+	return s.All(ctx, feedKey, filter)
 }
 
-// Get returns a single Data element, identified by the given ID parameter.
-func (s *DataService) Get(ctx context.Context, id string) (*Data, *Response, error) {
-	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%s", id))
-	if ferr != nil {
-		return nil, nil, ferr
-	}
-
-	req, rerr := s.client.NewRequest("GET", path, nil)
-	if rerr != nil {
-		return nil, nil, rerr
-	}
-
-	var data Data
-	resp, err := s.client.Do(ctx, req, &data)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return &data, resp, nil
+// Get returns the Data record identified by id from the Feed identified by
+// feedKey.
+func (s *DataService) Get(ctx context.Context, feedKey, id string) (*Data, *Response, error) {
+	return s.retrieve(ctx, feedKey, id)
 }
 
-// Update takes an ID and a Data record, updates the record idendified by ID,
-// and returns a new, updated Data instance.
-func (s *DataService) Update(ctx context.Context, id string, data *Data) (*Data, *Response, error) {
-	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%s", id))
-	if ferr != nil {
-		return nil, nil, ferr
+// Update updates the Data record identified by id in the Feed identified by
+// feedKey, and returns the updated record.
+func (s *DataService) Update(ctx context.Context, feedKey, id string, data *Data) (*Data, *Response, error) {
+	path, perr := dataPath(feedKey, id)
+	if perr != nil {
+		return nil, nil, perr
 	}
 
 	req, rerr := s.client.NewRequest("PATCH", path, data)
@@ -108,11 +104,12 @@ func (s *DataService) Update(ctx context.Context, id string, data *Data) (*Data,
 	return &updatedData, resp, nil
 }
 
-// Delete the Data identified by the given ID.
-func (s *DataService) Delete(ctx context.Context, id string) (*Response, error) {
-	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%s", id))
-	if ferr != nil {
-		return nil, ferr
+// Delete deletes the Data record identified by id from the Feed identified by
+// feedKey.
+func (s *DataService) Delete(ctx context.Context, feedKey, id string) (*Response, error) {
+	path, perr := dataPath(feedKey, id)
+	if perr != nil {
+		return nil, perr
 	}
 
 	req, rerr := s.client.NewRequest("DELETE", path, nil)
@@ -123,11 +120,13 @@ func (s *DataService) Delete(ctx context.Context, id string) (*Response, error) 
 	return s.client.Do(ctx, req, nil)
 }
 
-// private method for handling the Next, Prev, and Last commands
-func (s *DataService) retrieve(ctx context.Context, command string) (*Data, *Response, error) {
-	path, ferr := s.client.Feed.Path(fmt.Sprintf("/data/%v", command))
-	if ferr != nil {
-		return nil, nil, ferr
+// retrieve GETs a single Data record at feeds/{feedKey}/data/{suffix}, where
+// suffix is a record ID or one of the next, previous, first, and last
+// commands.
+func (s *DataService) retrieve(ctx context.Context, feedKey, suffix string) (*Data, *Response, error) {
+	path, perr := dataPath(feedKey, suffix)
+	if perr != nil {
+		return nil, nil, perr
 	}
 
 	req, rerr := s.client.NewRequest("GET", path, nil)
@@ -144,31 +143,32 @@ func (s *DataService) retrieve(ctx context.Context, command string) (*Data, *Res
 	return &data, resp, nil
 }
 
-// Next returns the next Data in the stream.
-func (s *DataService) Next(ctx context.Context) (*Data, *Response, error) {
-	return s.retrieve(ctx, "next")
+// Next returns the next Data in the Feed identified by feedKey.
+func (s *DataService) Next(ctx context.Context, feedKey string) (*Data, *Response, error) {
+	return s.retrieve(ctx, feedKey, "next")
 }
 
-// Prev returns the previous Data in the stream.
-func (s *DataService) Prev(ctx context.Context) (*Data, *Response, error) {
-	return s.retrieve(ctx, "previous")
+// Prev returns the previous Data in the Feed identified by feedKey.
+func (s *DataService) Prev(ctx context.Context, feedKey string) (*Data, *Response, error) {
+	return s.retrieve(ctx, feedKey, "previous")
 }
 
-// First returns the first Data in the stream.
-func (s *DataService) First(ctx context.Context) (*Data, *Response, error) {
-	return s.retrieve(ctx, "first")
+// First returns the first Data in the Feed identified by feedKey.
+func (s *DataService) First(ctx context.Context, feedKey string) (*Data, *Response, error) {
+	return s.retrieve(ctx, feedKey, "first")
 }
 
-// Last returns the last Data in the stream.
-func (s *DataService) Last(ctx context.Context) (*Data, *Response, error) {
-	return s.retrieve(ctx, "last")
+// Last returns the last Data in the Feed identified by feedKey.
+func (s *DataService) Last(ctx context.Context, feedKey string) (*Data, *Response, error) {
+	return s.retrieve(ctx, feedKey, "last")
 }
 
-// Create adds a new Data value to an existing Feed.
-func (s *DataService) Create(ctx context.Context, dp *Data) (*Data, *Response, error) {
-	path, ferr := s.client.Feed.Path("/data")
-	if ferr != nil {
-		return nil, nil, ferr
+// Create adds a new Data value to the Feed identified by feedKey, and returns
+// the created record.
+func (s *DataService) Create(ctx context.Context, feedKey string, dp *Data) (*Data, *Response, error) {
+	path, perr := dataPath(feedKey, "")
+	if perr != nil {
+		return nil, nil, perr
 	}
 
 	req, rerr := s.client.NewRequest("POST", path, dp)
@@ -176,7 +176,6 @@ func (s *DataService) Create(ctx context.Context, dp *Data) (*Data, *Response, e
 		return nil, nil, rerr
 	}
 
-	// request populates a new datapoint
 	point := &Data{}
 	resp, err := s.client.Do(ctx, req, point)
 	if err != nil {

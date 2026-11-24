@@ -9,50 +9,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestData_MissingFeed(t *testing.T) {
+func TestData_EmptyFeedKey(t *testing.T) {
 	setup()
 	defer teardown()
 
-	mux.HandleFunc(serverPattern("feeds/temperature/data"),
+	mux.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
-			testMethod(t, r, "POST")
-			fmt.Fprint(w, `{"id":"1", "value":"67.112"}`)
+			t.Errorf("request should not reach the server: %s %s", r.Method, r.URL)
 		},
 	)
 
-	assert := assert.New(t)
+	ctx := context.Background()
+	calls := map[string]func() error{
+		"All":    func() error { _, _, err := client.Data.All(ctx, "", nil); return err },
+		"Search": func() error { _, _, err := client.Data.Search(ctx, "", nil); return err },
+		"Get":    func() error { _, _, err := client.Data.Get(ctx, "", "1"); return err },
+		"Create": func() error { _, _, err := client.Data.Create(ctx, "", &Data{}); return err },
+		"Update": func() error { _, _, err := client.Data.Update(ctx, "", "1", &Data{}); return err },
+		"Delete": func() error { _, err := client.Data.Delete(ctx, "", "1"); return err },
+		"Next":   func() error { _, _, err := client.Data.Next(ctx, ""); return err },
+		"Prev":   func() error { _, _, err := client.Data.Prev(ctx, ""); return err },
+		"First":  func() error { _, _, err := client.Data.First(ctx, ""); return err },
+		"Last":   func() error { _, _, err := client.Data.Last(ctx, ""); return err },
+	}
 
-	dp := &Data{}
-	datapoint, response, err := client.Data.Create(context.Background(), dp)
-
-	assert.NotNil(err)
-	assert.Nil(datapoint)
-	assert.Nil(response)
-
-	assert.Equal(err.Error(), "CurrentFeed must be set")
-}
-
-func TestData_Unauthenticated(t *testing.T) {
-	setup()
-	defer teardown()
-
-	mux.HandleFunc(serverPattern("feeds/temperature/data"),
-		func(w http.ResponseWriter, r *http.Request) {
-			testMethod(t, r, "POST")
-			fmt.Fprint(w, `{"id":"1", "value":"67.112"}`)
-		},
-	)
-
-	assert := assert.New(t)
-
-	dp := &Data{}
-	datapoint, response, err := client.Data.Create(context.Background(), dp)
-
-	assert.NotNil(err)
-	assert.Nil(datapoint)
-	assert.Nil(response)
-
-	assert.Equal(err.Error(), "CurrentFeed must be set")
+	for name, call := range calls {
+		assert.Equal(t, errEmptyFeedKey, call(), name)
+	}
 }
 
 func TestDataCreate(t *testing.T) {
@@ -69,14 +52,12 @@ func TestDataCreate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
 	val := "67.112"
 
 	dp := &Data{
 		Value: val,
 	}
-	datapoint, response, err := client.Data.Create(context.Background(), dp)
+	datapoint, response, err := client.Data.Create(context.Background(), "temperature", dp)
 
 	assert.Nil(err)
 	assert.NotNil(datapoint)
@@ -100,9 +81,7 @@ func TestDataGet(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
-	datapoint, response, err := client.Data.Get(context.Background(), "1")
+	datapoint, response, err := client.Data.Get(context.Background(), "temperature", "1")
 
 	assert.Nil(err)
 	assert.NotNil(datapoint)
@@ -126,10 +105,8 @@ func TestAllDataNoFilter(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
 	// with no params
-	datapoints, response, err := client.Data.All(context.Background(), nil)
+	datapoints, response, err := client.Data.All(context.Background(), "temperature", nil)
 	datapoint := datapoints[0]
 
 	assert.Nil(err)
@@ -156,10 +133,8 @@ func TestAllDataFilter(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
 	// with no params
-	datapoints, response, err := client.Data.All(context.Background(), &DataFilter{
+	datapoints, response, err := client.Data.All(context.Background(), "temperature", &DataFilter{
 		StartTime: "2000-01-01",
 		EndTime:   "2010-01-01",
 	})
@@ -188,9 +163,7 @@ func TestSearchDataFilter(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
-	datapoints, response, err := client.Data.Search(context.Background(), &DataFilter{
+	datapoints, response, err := client.Data.Search(context.Background(), "temperature", &DataFilter{
 		StartTime: "2000-01-01",
 		EndTime:   "2010-01-01",
 	})
@@ -215,9 +188,7 @@ func TestDataDelete(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "test"})
-
-	response, err := client.Data.Delete(context.Background(), "1")
+	response, err := client.Data.Delete(context.Background(), "test", "1")
 
 	assert.Nil(err)
 	assert.NotNil(response)
@@ -258,33 +229,31 @@ func TestDataQueue(t *testing.T) {
 	)
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "temperature"})
-
 	var (
 		datapoint *Data
 		response  *Response
 		err       error
 	)
 
-	datapoint, response, err = client.Data.Next(context.Background())
+	datapoint, response, err = client.Data.Next(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal("1", datapoint.ID)
 	assert.Equal("1", datapoint.Value)
 
-	datapoint, response, err = client.Data.Prev(context.Background())
+	datapoint, response, err = client.Data.Prev(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal("2", datapoint.ID)
 	assert.Equal("2", datapoint.Value)
 
-	datapoint, response, err = client.Data.Last(context.Background())
+	datapoint, response, err = client.Data.Last(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal("3", datapoint.ID)
 	assert.Equal("3", datapoint.Value)
 
-	datapoint, response, err = client.Data.First(context.Background())
+	datapoint, response, err = client.Data.First(context.Background(), "temperature")
 	assert.Nil(err)
 	assert.NotNil(response)
 	assert.Equal("1", datapoint.ID)
@@ -305,9 +274,7 @@ func TestDataDeleteError(t *testing.T) {
 
 	assert := assert.New(t)
 
-	client.SetFeed(&Feed{Key: "test"})
-
-	response, err := client.Data.Delete(context.Background(), "1")
+	response, err := client.Data.Delete(context.Background(), "test", "1")
 
 	assert.NotNil(err)
 	if assert.NotNil(response) {
